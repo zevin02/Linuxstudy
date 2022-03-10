@@ -5,6 +5,7 @@ using namespace std;
 
 void test_opendir()
 {
+    //打开目录
     DIR* a=opendir("~/githubgovern");
     cout<<a<<endl;
 }
