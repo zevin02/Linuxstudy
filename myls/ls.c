@@ -9,33 +9,24 @@
 #include<string.h>
 int aflag = 0,lflag = 0;//作为标识符，如果aflag lflag为1则有-a和-l这个参数，执行选项
 int iflag=0;
-void display_file(char *fname , char *nname,int iflag)//fname里面存放的是目录的路径
+int sflag=0;
+typedef struct filenode
 {
-    struct stat buf;//buf用来接收文件的各种信息
-    struct tm *t;//用来接收时间的参数，
-    int i;
+  char rights[12];
+  int nlink;
+  char username[15];
+  char groupname[15];
+  int size;
+  char filetime[30];
+  char filename;
+  
+}filenode;
 
-    if(stat(fname,&buf) ==-1)//路径存放失败
-    {
-       perror("stat error\n");
-       return ;                 
-    }
-    if(iflag)
-    {
-      printf("%d ",buf.st_ino);
-    }
-            switch(buf.st_mode & S_IFMT)//s_ifmt是一个子域掩码，按位与的结果来判断是什么权限
-            {
-                case S_IFSOCK:  printf("s");  break;
-                case S_IFLNK: printf("l");  break;
-                case S_IFREG: printf("-");  break;
-                case S_IFBLK: printf("b");  break;
-                case S_IFDIR: printf("d");  break;
-                case S_IFCHR: printf("c");  break;
-                case S_IFIFO: printf("p");  break;
-                                                                                                                                  
-            }
-      //用户权限    
+
+
+void display_rights(struct stat buf)
+{
+  
       if(buf.st_mode & S_IRUSR)
 				printf("r");
 			else
@@ -74,36 +65,119 @@ void display_file(char *fname , char *nname,int iflag)//fname里面存放的是�
 				printf("x");
 			else
 				printf("-");
-                printf(" %2d ",buf.st_nlink);//硬链接数
-
-                printf("%s ",getpwuid(buf.st_uid)->pw_name);
-                printf("%s ",getgrgid(buf.st_gid)->gr_name);
-
-                printf("%4ld ",buf.st_size);//所占的字节大小
-               // char buf_time[32];
-                //strcpy(buf_time,ctime(&buf.st_mtime));
-                
-              //  buf_time[strlen(buf_time)-1] = '\0'; //去掉换行符
-               // printf(" %s",buf_time);             //打印文件的时间信息
-                t = localtime(&buf.st_mtime);//用t来接收时间
-                printf("%d-%02d-%02d  %02d:%02d ",t->tm_year+1900,t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min);
-                printf("%s\n",nname);//文件名
-      return ;
-
 }
 
 
-void displayiflag(char*fname,char*nname)
+//打印文件类型
+void display_mode(struct stat buf)
+{
+  
+            switch(buf.st_mode & S_IFMT)//s_ifmt是一个子域掩码，按位与的结果来判断是什么权限
+            {
+                case S_IFSOCK:  printf("s");  break;
+                case S_IFLNK: printf("l");  break;
+                case S_IFREG: printf("-");  break;
+                case S_IFBLK: printf("b");  break;
+                case S_IFDIR: printf("d");  break;
+                case S_IFCHR: printf("c");  break;
+                case S_IFIFO: printf("p");  break;
+                                                                                                                                  
+            }
+}
+
+
+void display_sflag(char*fname,char*nname)
 {
 
     struct stat buf;//buf用来接收文件的各种信息
-stat(fname,&buf);
+    stat(fname,&buf);
     if(stat(fname,&buf) ==-1)//路径存放失败
     {
        perror("stat error\n");
        return ;                 
     }
-      printf("%d  ",buf.st_ino);
+   long long size= buf.st_size/1024;
+   if(size<=4)
+   {
+     printf("4 ");
+   }
+   else 
+   {
+     printf("%4lld ",size);
+   }
+      printf("%s  ",nname);
+}
+
+void display_file(char *fname , char *nname)//fname里面存放的是目录的路径,显示文件的信息
+{
+            struct stat buf;//buf用来接收文件的各种信息
+            //   struct tm *t;//用来接收时间的参数，
+
+           if(stat(fname,&buf) ==-1)//路径存放失败
+          {
+           perror("stat error\n");
+           return ;                 
+          }
+          if(iflag)//有-i这个选项，就在首行打印
+          {
+            printf("%ld ",buf.st_ino);
+          }
+
+          if(sflag)//有-s这个选项
+          {
+   long long size= buf.st_size/1024;
+   if(size<=4)
+   {
+     printf("%3d ",4);
+   }
+   else 
+   {
+     printf("%3lld ",size);
+   }
+          }
+
+    //打印文件类型
+           display_mode(buf);
+            //打印权限
+           // user other group
+            display_rights(buf);
+            printf(" %2ld ",buf.st_nlink);//硬链接数
+
+            printf("%10s ",getpwuid(buf.st_uid)->pw_name);
+            printf("%10s ",getgrgid(buf.st_gid)->gr_name);
+
+            printf(" %8ld  ",buf.st_size);//所占的字节大小
+               // char buf_time[32];
+                //strcpy(buf_time,ctime(&buf.st_mtime));
+                
+              //  buf_time[strlen(buf_time)-1] = '\0'; //去掉换行符
+               // printf(" %s",buf_time);             //打印文件的时间信息
+               // t = localtime(&buf.st_mtime);//用t来接收时间
+            char *ctime();
+            printf("%.12s  ",4+ctime(&(&buf) -> st_mtime));
+               // printf("%d-%02d-%02d  %02d:%02d ",t->tm_year+1900,t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min);
+            printf("%s\n",nname);//文件名
+      return ;
+
+}
+
+
+
+
+
+
+
+void display_iflag(char*fname,char*nname)
+{
+
+    struct stat buf;//buf用来接收文件的各种信息
+    stat(fname,&buf);
+    if(stat(fname,&buf) ==-1)//路径存放失败
+    {
+       perror("stat error\n");
+       return ;                 
+    }
+      printf("%ld  ",buf.st_ino);
       printf("%s  ",nname);
 }
 
@@ -120,33 +194,45 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
     }
      while((myitem = readdir(mydir)) != NULL)
      {
-         if(myitem->d_name[0] == '.' && !aflag)//没有-a参数，如果if条件成立的就继续下一次循环，否则往下执行
+          
+        //fname里面是目录的名字和文件的名字,全都弄到fname里面
+        
+           sprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
+           if(myitem->d_name[0] == '.' && aflag==0)//没有-a参数，如果if条件成立的就继续下一次循环，否则往下执行
          {
            continue;//在目录往下继续搜索，遇到隐藏文件就跳过
          }
+
+
           if(lflag)//走到这里就说明有-a参数，ls -l -a dir，同时也有-l参数
         {
-           sprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
-          // sprintf(fname,"%s",dir);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
+           //srvprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
        //    printf("%s",fname);
-        //fname里面是目录的名字和文件的名字
       
-            display_file(fname,myitem->d_name,iflag);//把文件的秘密打印出来,第一个是目录的路径名，第二个是里面的文件名                                      
+            display_file(fname,myitem->d_name);//把文件的秘密打印出来,第一个是目录的路径名，第二个是里面的文件名                                      
         }
+
+
           else if(iflag)//出现了-i选项就执行
           {
 
-           sprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
-            displayiflag(fname,myitem->d_name);
+           //sprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
+            display_iflag(fname,myitem->d_name);
+          
+          }
+          else if(sflag)
+          {
+            display_sflag(fname,myitem->d_name);
           }
           else // ls dir,没有参数，只显示一个目录，
           { 
             printf("%s  ",myitem->d_name);// 显示文件名，
-          }                  
+          }
+
+
       }
          printf("\n");
          closedir(mydir);
-         return ;
 
 }
 
@@ -160,7 +246,7 @@ int main(int argc,char *argv[])
           //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
           //optind默认是1，调用一次getopt就会+1
           //  
-       while((ch = getopt(argc,argv,"lia")) != -1)//getopt用来解析命令行的参数，返回int，错误就返回-1,解析-a和-l两个命令,getopt处理-开头的参数
+       while((ch = getopt(argc,argv,"lias")) != -1)//getopt用来解析命令行的参数，返回int，错误就返回-1,解析-a和-l两个命令,getopt处理-开头的参数
               //每次getopt后，这个索引指向argv里当前分析的字符串的下一个索引，因此,optind也就往后移动
               //argv[optind]就能得到下个字符串
               //
@@ -176,14 +262,18 @@ int main(int argc,char *argv[])
                    case 'i': 
                         iflag = 1;  
                         break;
+                   case 's':
+                        sflag=  1;
+                        break;
                    default:  
                         printf("wrong option:%c\n",optopt);
                         return -1;
                       }
           }
           
-                   if(optind == argc) //ls .没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
-                     display_dir(".");
+                  // if(optind == argc) //ls .没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
+       if(argc==1||*argv[argc-1]=='-')             
+       display_dir(".");
           
             for(i = optind; i < argc ; i++) //ls name1 name2....，从optind开始执行,执行后面的文件名字
            {
@@ -203,11 +293,11 @@ int main(int argc,char *argv[])
               {
               if(lflag)//ls -l file,只打印一个
               {
-                display_file(argv[i],argv[i],iflag);//显示文件信息
+                display_file(argv[i],argv[i]);//显示文件信息
               }
                 else// ls file
                 {
-                  printf("%s",argv[i]);//只答应文件名
+                  printf("%s",argv[i]);//只打印文件名
                   printf("\n");
                 } 
               }
