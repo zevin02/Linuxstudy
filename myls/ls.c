@@ -178,11 +178,12 @@ void display_iflag(char*fname,char*nname)
        return ;                 
     }
       printf("%ld  ",buf.st_ino);
-      printf("%s  ",nname);
+      printf("%5s  ",nname);
 }
 
 void display_dir(char *dir)//显示目录下的所有文件，同时判断是否有-a选项，里面的是目录的路径名，有相对路径，也有绝对路径
 {
+    int i=0;
     DIR *mydir;
     struct dirent *myitem;
     char fname[256];
@@ -218,15 +219,27 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
 
            //sprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
             display_iflag(fname,myitem->d_name);
-          
+            i++;
+            if(i%5==0)
+            {
+              printf("\n");
+            }
           }
           else if(sflag)
           {
             display_sflag(fname,myitem->d_name);
           }
-          else // ls dir,没有参数，只显示一个目录，
+          else // ls -a dir,没有参数，只显示一个目录，
           { 
-            printf("%s  ",myitem->d_name);// 显示文件名，
+            if(iflag)
+            {
+            display_iflag(fname,myitem->d_name);
+            }
+            else 
+            {
+
+            printf("%5s  ",myitem->d_name);// 显示文件名，
+            }
           }
 
 
@@ -271,9 +284,9 @@ int main(int argc,char *argv[])
                       }
           }
           
-                  // if(optind == argc) //ls .没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
+                  // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
        if(argc==1||*argv[argc-1]=='-')             
-       display_dir(".");
+          display_dir(".");
           
             for(i = optind; i < argc ; i++) //ls name1 name2....，从optind开始执行,执行后面的文件名字
            {
@@ -282,7 +295,7 @@ int main(int argc,char *argv[])
                  // perror("cannot access argv[i]!\n");
                   printf("cannot access %s!\n",argv[i]);
                   printf(": No such file or directory\n ");
-                   return -1;
+                  return -1;
               }
                if(S_ISDIR(buf.st_mode))//是目录，判断此路径下有目录文件,里面的参数是st_mode
               {
@@ -295,16 +308,14 @@ int main(int argc,char *argv[])
               {
                 display_file(argv[i],argv[i]);//显示文件信息
               }
-                else// ls file
-                {
-                  printf("%s",argv[i]);//只打印文件名
-                  printf("\n");
-                } 
+              else// ls file
+              {
+                printf("%s",argv[i]);//只打印文件名
+                printf("\n");
+              } 
               }
            }
   
       return 0;
  }
-          
-              
 
