@@ -248,18 +248,11 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
          closedir(mydir);
 
 }
-
-int main(int argc,char *argv[])
+//判断是否有带什么参数
+void judge_mode(int argc,char*argv[],int ch,char *s)
 {
-    int ch,i;
-    struct stat buf;//用来记录文件的信息
 
-      //opterr = 0;
-          //解析命令
-          //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
-          //optind默认是1，调用一次getopt就会+1
-          //  
-       while((ch = getopt(argc,argv,"lias")) != -1)//getopt用来解析命令行的参数，返回int，错误就返回-1,解析-a和-l两个命令,getopt处理-开头的参数
+       while((ch = getopt(argc,argv,s)) != -1)//getopt用来解析命令行的参数，返回int，错误就返回-1,解析-a和-l两个命令,getopt处理-开头的参数
               //每次getopt后，这个索引指向argv里当前分析的字符串的下一个索引，因此,optind也就往后移动
               //argv[optind]就能得到下个字符串
               //
@@ -280,9 +273,24 @@ int main(int argc,char *argv[])
                         break;
                    default:  
                         printf("wrong option:%c\n",optopt);
-                        return -1;
+                        return ;
                       }
           }
+}
+
+
+
+int main(int argc,char *argv[])
+{
+    int ch,i;
+    struct stat buf;//用来记录文件的信息
+
+      //opterr = 0;
+          //解析命令
+          //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
+          //optind默认是1，调用一次getopt就会+1
+          //  
+        judge_mode(argc,argv,ch,"lias");
           
                   // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
        if(argc==1||*argv[argc-1]=='-')             
