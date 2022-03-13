@@ -10,6 +10,7 @@
 int aflag = 0,lflag = 0;//作为标识符，如果aflag lflag为1则有-a和-l这个参数，执行选项
 int iflag=0;
 int sflag=0;
+int Rflag=0;
 typedef struct filenode
 {
   char rights[12];
@@ -237,7 +238,8 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
             }
             else 
             {
-
+            //如果是目录的话就用蓝色
+            //如果是可执行文件的话就用绿色
             printf("%5s  ",myitem->d_name);// 显示文件名，
             }
           }
@@ -271,6 +273,10 @@ void judge_mode(int argc,char*argv[],int ch,char *s)
                    case 's':
                         sflag=  1;
                         break;
+
+                   case 'R'://递归显示文件，从根目录开始
+                        Rflag=  1;
+                        break;
                    default:  
                         printf("wrong option:%c\n",optopt);
                         return ;
@@ -286,11 +292,11 @@ int main(int argc,char *argv[])
     struct stat buf;//用来记录文件的信息
 
       //opterr = 0;
-          //解析命令
-          //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
-          //optind默认是1，调用一次getopt就会+1
-          //  
-        judge_mode(argc,argv,ch,"lias");
+      //解析命令
+      //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
+      //optind默认是1，调用一次getopt就会+1
+      // 判断是否带有参数 
+        judge_mode(argc,argv,ch,"liasR");
           
                   // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
        if(argc==1||*argv[argc-1]=='-')             
