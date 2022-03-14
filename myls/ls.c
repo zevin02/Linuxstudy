@@ -7,11 +7,15 @@
 #include <pwd.h>
 #include <grp.h>
 #include<string.h>
+#include<stdlib.h>
 int aflag = 0,lflag = 0;//作为标识符，如果aflag lflag为1则有-a和-l这个参数，执行选项
 int iflag=0;
 int sflag=0;
 int Rflag=0;
+
+    char filename[256][260];
 typedef struct filenode
+
 {
   char rights[12];
   int nlink;
@@ -181,6 +185,41 @@ void display_iflag(char*fname,char*nname)
       printf("%ld  ",buf.st_ino);
       printf("%5s  ",nname);
 }
+void getfilename(char* dir,int *cnt)
+{
+
+    DIR * cntdir;
+    struct dirent* cntitem;
+    cntdir = opendir(dir);
+    int len=0;
+    while((cntitem=readdir(cntdir))!=NULL)//记录文件名，之后再进行文件名的字典序排序
+    {
+      strcpy(filename[*cnt],cntitem->d_name);
+      len=strlen(filename[*cnt]);
+      len=0;
+     (*cnt)++;
+    }
+}
+
+void sortbyletter(int *cnt)
+{
+  char temp[260];
+  int j=0;
+  int i=0;
+  for(i=0;i<(*cnt)-1;i++)
+  {
+    for(j=0;j<(*cnt)-1-i;j++)
+    {
+      if(strcmp(filename[j],filename[j+1])>0)
+      {
+         strcpy(temp,filename[j]);
+         strcpy(filename[j],filename[j+1]);
+         strcpy(filename[j+1],temp);
+      }
+    }
+  }
+
+}
 
 void display_dir(char *dir)//显示目录下的所有文件，同时判断是否有-a选项，里面的是目录的路径名，有相对路径，也有绝对路径
 {
@@ -188,17 +227,21 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
     DIR *mydir;
     struct dirent *myitem;
     char fname[256];
-
     if((mydir = opendir(dir)) == NULL)
     {
         perror("fail to opendir!\n");
         return ;                     
     }
+    int cnt=0;
+    getfilename(dir,&cnt);//得到目录下文件的名字
+    sortbyletter(&cnt);
+    printf("cnt=%d\n",cnt);
+
+    int j=0;
      while((myitem = readdir(mydir)) != NULL)
      {
           
         //fname里面是目录的名字和文件的名字,全都弄到fname里面
-        
            sprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
            if(myitem->d_name[0] == '.' && aflag==0)//没有-a参数，如果if条件成立的就继续下一次循环，否则往下执行
          {
