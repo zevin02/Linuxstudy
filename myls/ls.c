@@ -13,20 +13,7 @@ int iflag=0;
 int sflag=0;
 int Rflag=0;
 
-    char filename[256][260];
-typedef struct filenode
-
-{
-  char rights[12];
-  int nlink;
-  char username[15];
-  char groupname[15];
-  int size;
-  char filetime[30];
-  char filename;
-  
-}filenode;
-
+char filename[256][260];
 
 
 void display_rights(struct stat buf)
@@ -238,12 +225,13 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
     printf("cnt=%d\n",cnt);
 
     int j=0;
-     while((myitem = readdir(mydir)) != NULL)
-     {
-          
+ //    while((myitem = readdir(mydir)) != NULL)
+ //    {
+       for(j=0;j<cnt;j++)
+       {
         //fname里面是目录的名字和文件的名字,全都弄到fname里面
-           sprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
-           if(myitem->d_name[0] == '.' && aflag==0)//没有-a参数，如果if条件成立的就继续下一次循环，否则往下执行
+           sprintf(fname,"%s/%s",dir,filename[j]);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
+           if(filename[j][0] == '.' && aflag==0)//没有-a参数，如果if条件成立的就继续下一次循环，否则往下执行
          {
            continue;//在目录往下继续搜索，遇到隐藏文件就跳过
          }
@@ -254,7 +242,7 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
            //srvprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
        //    printf("%s",fname);
       
-            display_file(fname,myitem->d_name);//把文件的秘密打印出来,第一个是目录的路径名，第二个是里面的文件名                                      
+            display_file(fname,filename[j]);//把文件的秘密打印出来,第一个是目录的路径名，第二个是里面的文件名                                      
         }
 
 
@@ -262,7 +250,7 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
           {
 
            //sprintf(fname,"%s/%s",dir,myitem->d_name);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
-            display_iflag(fname,myitem->d_name);
+            display_iflag(fname,filename[j]);
             i++;
             if(i%5==0)
             {
@@ -271,19 +259,19 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
           }
           else if(sflag)
           {
-            display_sflag(fname,myitem->d_name);
+            display_sflag(fname,filename[j]);
           }
           else // ls -a dir,没有参数，只显示一个目录，
           { 
             if(iflag)
             {
-            display_iflag(fname,myitem->d_name);
+            display_iflag(fname,filename[j]);
             }
             else 
             {
             //如果是目录的话就用蓝色
             //如果是可执行文件的话就用绿色
-            printf("%5s  ",myitem->d_name);// 显示文件名，
+            printf("%5s  ",filename[j]);// 显示文件名，
             }
           }
 
