@@ -134,17 +134,11 @@ void display_file(char *fname , char *nname)//fname里面存放的是目录的�
            // user other group
             display_rights(buf);
             printf(" %2ld ",buf.st_nlink);//硬链接数
-
+          //打印用户名和所属组
             printf("%10s ",getpwuid(buf.st_uid)->pw_name);
             printf("%10s ",getgrgid(buf.st_gid)->gr_name);
 
             printf(" %8ld  ",buf.st_size);//所占的字节大小
-               // char buf_time[32];
-                //strcpy(buf_time,ctime(&buf.st_mtime));
-                
-              //  buf_time[strlen(buf_time)-1] = '\0'; //去掉换行符
-               // printf(" %s",buf_time);             //打印文件的时间信息
-               // t = localtime(&buf.st_mtime);//用t来接收时间
             char *ctime();
             printf("%.12s  ",4+ctime(&(&buf) -> st_mtime));
                // printf("%d-%02d-%02d  %02d:%02d ",t->tm_year+1900,t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min);
@@ -158,7 +152,7 @@ void display_file(char *fname , char *nname)//fname里面存放的是目录的�
 
 
 
-
+//实现- i选项
 void display_iflag(char*fname,char*nname)
 {
 
@@ -172,6 +166,7 @@ void display_iflag(char*fname,char*nname)
       printf("%ld  ",buf.st_ino);
       printf("%5s  ",nname);
 }
+//获取文件的名字
 void getfilename(char* dir,int *cnt)
 {
 
@@ -187,7 +182,7 @@ void getfilename(char* dir,int *cnt)
      (*cnt)++;
     }
 }
-
+//按照字典序排列
 void sortbyletter(int *cnt)
 {
   char temp[260];
@@ -214,6 +209,7 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
     DIR *mydir;
     struct dirent *myitem;
     char fname[256];
+    struct stat buf;//获取文件属性打印文件颜色
     if((mydir = opendir(dir)) == NULL)
     {
         perror("fail to opendir!\n");
@@ -225,13 +221,13 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
     printf("cnt=%d\n",cnt);
 
     int j=0;
- //    while((myitem = readdir(mydir)) != NULL)
- //    {
        for(j=0;j<cnt;j++)
        {
         //fname里面是目录的名字和文件的名字,全都弄到fname里面
            sprintf(fname,"%s/%s",dir,filename[j]);//dir这个目录的路径名字，文件名，这些名字全都答应到fname这个字符串里面来接收
+           stat(fname,&buf);
            if(filename[j][0] == '.' && aflag==0)//没有-a参数，如果if条件成立的就继续下一次循环，否则往下执行
+             
          {
            continue;//在目录往下继续搜索，遇到隐藏文件就跳过
          }
@@ -271,7 +267,20 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
             {
             //如果是目录的话就用蓝色
             //如果是可执行文件的话就用绿色
-            printf("%5s  ",filename[j]);// 显示文件名，
+                if(S_ISREG(buf.st_mode))//一般文件
+                {
+                printf("%s  ",filename[j]);//直接接打印文件名,不显示文件
+                }
+                else if(S_ISDIR(buf.st_mode))//是一个目录打印蓝色
+                {
+                  printf("\033[34m %s  \033[0m",filename[j]);
+                }
+                else//可执行文件 打印成绿色
+                {
+
+                  printf("\033[32m %s  \033[0m",filename[j]);
+                }
+         //   printf("%5s  ",filename[j]);// 显示文件名，
             }
           }
 
@@ -355,12 +364,23 @@ int main(int argc,char *argv[])
               }
               else// ls file
               {
-                printf("%s",argv[i]);//只打印文件名
-                printf("\n");
+                if(S_ISREG(buf.st_mode))//一般文件
+                {
+                printf("%s  ",argv[i]);//直接接打印文件名,不显示文件
+                }
+                else if(S_ISDIR(buf.st_mode))//是一个目录
+                {
+                  printf("\033[34m %s  \033[0m",argv[i]);
+                }
+                else//可执行文件 
+                {
+
+                  printf("\033[32m %s  \033[0m",argv[i]);
+                }
               } 
               }
            }
-  
+        printf("\n"); 
       return 0;
  }
 
