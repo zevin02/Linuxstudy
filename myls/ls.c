@@ -12,9 +12,9 @@ int aflag = 0,lflag = 0;//作为标识符，如果aflag lflag为1则有-a和-l�
 int iflag=0;
 int sflag=0;
 int rflag=0;
-
+int tflag=0;
 char filename[256][260];
-
+long filetime[256];
 //打印颜色
 void print(struct stat buf,char* filename)
 {
@@ -195,6 +195,7 @@ void getfilename(char* dir,int *cnt)
     cntdir = opendir(dir);
     int len=0;
     while((cntitem=readdir(cntdir))!=NULL)//记录文件名，之后再进行文件名的字典序排序
+    
     {
       strcpy(filename[*cnt],cntitem->d_name);
       len=strlen(filename[*cnt]);
@@ -212,6 +213,15 @@ void sortbyletter(int *cnt)
   {
     for(j=0;j<(*cnt)-1-i;j++)
     {
+      if(tflag)
+      {
+      if(filetime[j]<filetime[j+1])
+      {
+         strcpy(temp,filename[j]);
+         strcpy(filename[j],filename[j+1]);
+         strcpy(filename[j+1],temp);
+      }
+      }
       if(rflag)
       {
 
@@ -237,6 +247,20 @@ void sortbyletter(int *cnt)
 
 }
 
+void gettime(int *cnt,char* dir)//获得时间的数字
+{
+  struct stat buf;
+  char fname[256];
+  int j=0;
+    sprintf(fname,"%s/%s",dir,filename[j]);
+    stat(fname,&buf);
+  for(j=0;j<(*cnt);j++)
+  {
+
+    filetime[j]=buf.st_mtime;
+  }
+}
+
 void display_dir(char *dir)//显示目录下的所有文件，同时判断是否有-a选项，里面的是目录的路径名，有相对路径，也有绝对路径
 {
     int i=0;
@@ -250,9 +274,9 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
         return ;                     
     }
     int cnt=0;
-    getfilename(dir,&cnt);//得到目录下文件的名字
+    getfilename(dir,&cnt);//得到目录下文件的名字以及时间
+    gettime(&cnt,dir);
     sortbyletter(&cnt);
-
     int j=0;
        for(j=0;j<cnt;j++)
        {
@@ -336,6 +360,9 @@ void judge_mode(int argc,char*argv[],int ch,char *s)
                    case 'r'://递归显示文件，从根目录开始
                         rflag=  1;
                         break;
+                   case 't':
+                        tflag=1;
+                        break;
                    default:  
                         printf("wrong option:%c\n",optopt);
                         return ;
@@ -355,7 +382,7 @@ int main(int argc,char *argv[])
       //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
       //optind默认是1，调用一次getopt就会+1
       // 判断是否带有参数 
-        judge_mode(argc,argv,ch,"liasr");
+        judge_mode(argc,argv,ch,"liasrt");
           
       // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
        if(argc==1||*argv[argc-1]=='-')             
