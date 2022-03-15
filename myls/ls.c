@@ -11,7 +11,7 @@
 int aflag = 0,lflag = 0;//作为标识符，如果aflag lflag为1则有-a和-l这个参数，执行选项
 int iflag=0;
 int sflag=0;
-int Rflag=0;
+int rflag=0;
 
 char filename[256][260];
 
@@ -160,8 +160,8 @@ void display_file(char *fname , char *nname)//fname里面存放的是目录的�
             printf(" %8ld  ",buf.st_size);//所占的字节大小
             char *ctime();
             printf("%.12s  ",4+ctime(&(&buf) -> st_mtime));
-               // printf("%d-%02d-%02d  %02d:%02d ",t->tm_year+1900,t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min);
-            printf("%s\n",nname);//文件名
+            print(buf,nname);//打印的同时显示颜色
+            printf("\n");
       return ;
 
 }
@@ -183,7 +183,8 @@ void display_iflag(char*fname,char*nname)
        return ;                 
     }
       printf("%ld  ",buf.st_ino);
-      printf("%5s  ",nname);
+     // printf("%5s  ",nname);
+     print(buf,nname);
 }
 //获取文件的名字
 void getfilename(char* dir,int *cnt)
@@ -201,7 +202,7 @@ void getfilename(char* dir,int *cnt)
      (*cnt)++;
     }
 }
-//按照字典序排列
+//按照字典序排列,默认按升序排列，如果有-r的话就逆序排列
 void sortbyletter(int *cnt)
 {
   char temp[260];
@@ -211,11 +212,25 @@ void sortbyletter(int *cnt)
   {
     for(j=0;j<(*cnt)-1-i;j++)
     {
+      if(rflag)
+      {
+
+      if(strcmp(filename[j],filename[j+1])<0)
+      {
+         strcpy(temp,filename[j]);
+         strcpy(filename[j],filename[j+1]);
+         strcpy(filename[j+1],temp);
+      }
+      }
+      else 
+      {
+
       if(strcmp(filename[j],filename[j+1])>0)
       {
          strcpy(temp,filename[j]);
          strcpy(filename[j],filename[j+1]);
          strcpy(filename[j+1],temp);
+      }
       }
     }
   }
@@ -237,7 +252,6 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
     int cnt=0;
     getfilename(dir,&cnt);//得到目录下文件的名字
     sortbyletter(&cnt);
-    printf("cnt=%d\n",cnt);
 
     int j=0;
        for(j=0;j<cnt;j++)
@@ -291,10 +305,6 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
          //   printf("%5s  ",filename[j]);// 显示文件名，
             }
           }
-
-
-      
-
          printf("\n");
          closedir(mydir);
 
@@ -323,8 +333,8 @@ void judge_mode(int argc,char*argv[],int ch,char *s)
                         sflag=  1;
                         break;
 
-                   case 'R'://递归显示文件，从根目录开始
-                        Rflag=  1;
+                   case 'r'://递归显示文件，从根目录开始
+                        rflag=  1;
                         break;
                    default:  
                         printf("wrong option:%c\n",optopt);
@@ -345,7 +355,7 @@ int main(int argc,char *argv[])
       //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
       //optind默认是1，调用一次getopt就会+1
       // 判断是否带有参数 
-        judge_mode(argc,argv,ch,"liasR");
+        judge_mode(argc,argv,ch,"liasr");
           
       // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
        if(argc==1||*argv[argc-1]=='-')             
