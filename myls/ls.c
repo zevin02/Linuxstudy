@@ -15,7 +15,26 @@ int Rflag=0;
 
 char filename[256][260];
 
+//打印颜色
+void print(struct stat buf,char* filename)
+{
+                if(S_ISREG(buf.st_mode))//一般文件
+                {
+                  if(buf.st_mode&S_IXOTH)//可执行文件,打印成绿色
+                  {
+                  printf("\033[32m %s  \033[0m",filename);
+                  }
+                  else 
+                  {
 
+                printf("%s  ",filename);//直接接打印文件名,不显示文件
+                  }
+                }
+                else if(S_ISDIR(buf.st_mode))//是一个目录打印蓝色
+                {
+                  printf("\033[34m %s  \033[0m",filename);
+                }
+}
 void display_rights(struct stat buf)
 {
   
@@ -267,22 +286,7 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
             {
             //如果是目录的话就用蓝色
             //如果是可执行文件的话就用绿色
-                if(S_ISREG(buf.st_mode))//一般文件
-                {
-                  if(buf.st_mode&S_IXOTH)//可执行文件,打印成绿色
-                  {
-                  printf("\033[32m %s  \033[0m",filename[j]);
-                  }
-                  else 
-                  {
-
-                printf("%s  ",filename[j]);//直接接打印文件名,不显示文件
-                  }
-                }
-                else if(S_ISDIR(buf.st_mode))//是一个目录打印蓝色
-                {
-                  printf("\033[34m %s  \033[0m",filename[j]);
-                }
+            print(buf,filename[j]);
                 }
          //   printf("%5s  ",filename[j]);// 显示文件名，
             }
@@ -369,19 +373,7 @@ int main(int argc,char *argv[])
               }
               else// ls file
               {
-                if(S_ISREG(buf.st_mode))//一般文件
-                {
-                printf("%s  ",argv[i]);//直接接打印文件名,不显示文件
-                }
-                else if(S_ISDIR(buf.st_mode))//是一个目录
-                {
-                  printf("\033[34m %s  \033[0m",argv[i]);
-                }
-                else//可执行文件 
-                {
-
-                  printf("\033[32m %s  \033[0m",argv[i]);
-                }
+                print(buf,argv[i]);
               } 
               }
            }
