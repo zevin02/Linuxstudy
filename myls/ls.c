@@ -269,23 +269,28 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
             //如果是可执行文件的话就用绿色
                 if(S_ISREG(buf.st_mode))//一般文件
                 {
+                  if(buf.st_mode&S_IXOTH)//可执行文件,打印成绿色
+                  {
+                  printf("\033[32m %s  \033[0m",filename[j]);
+                  }
+                  else 
+                  {
+
                 printf("%s  ",filename[j]);//直接接打印文件名,不显示文件
+                  }
                 }
                 else if(S_ISDIR(buf.st_mode))//是一个目录打印蓝色
                 {
                   printf("\033[34m %s  \033[0m",filename[j]);
                 }
-                else//可执行文件 打印成绿色
-                {
-
-                  printf("\033[32m %s  \033[0m",filename[j]);
                 }
          //   printf("%5s  ",filename[j]);// 显示文件名，
             }
           }
 
 
-      }
+      
+
          printf("\n");
          closedir(mydir);
 
@@ -338,7 +343,7 @@ int main(int argc,char *argv[])
       // 判断是否带有参数 
         judge_mode(argc,argv,ch,"liasR");
           
-                  // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
+      // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
        if(argc==1||*argv[argc-1]=='-')             
           display_dir(".");
           
