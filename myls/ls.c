@@ -13,6 +13,7 @@ int iflag=0;
 int sflag=0;
 int rflag=0;
 int tflag=0;
+int Rflag=0;
 char filename[256][260];
 long filetime[256];
 //打印颜色
@@ -116,8 +117,9 @@ void display_sflag(char*fname,char*nname)
    {
      printf("%4lld ",size);
    }
-      printf("%s  ",nname);
+   print(buf,nname);
 }
+
 
 void display_file(char *fname , char *nname)//fname里面存放的是目录的路径,显示文件的信息
 {
@@ -204,14 +206,14 @@ void getfilename(char* dir,int *cnt)
     }
 }
 //按照字典序排列,默认按升序排列，如果有-r的话就逆序排列
-void sortbyletter(int *cnt)
+void sortbyletter(int cnt)
 {
   char temp[260];
   int j=0;
   int i=0;
-  for(i=0;i<(*cnt)-1;i++)
+  for(i=0;i<(cnt)-1;i++)
   {
-    for(j=0;j<(*cnt)-1-i;j++)
+    for(j=0;j<(cnt)-1-i;j++)
     {
       if(tflag)
       {
@@ -247,19 +249,64 @@ void sortbyletter(int *cnt)
 
 }
 
-void gettime(int *cnt,char* dir)//获得时间的数字
+void gettime(int cnt,char* dir)//获得时间的数字
 {
   struct stat buf;
   char fname[256];
   int j=0;
     sprintf(fname,"%s/%s",dir,filename[j]);
     stat(fname,&buf);
-  for(j=0;j<(*cnt);j++)
+  for(j=0;j<(cnt);j++)
   {
 
     filetime[j]=buf.st_mtime;
   }
 }
+
+
+void display_Rflag(char* path,char *filename,struct stat buf)
+{
+  char temp[256];
+  strcpy(temp,path);
+  char mpath[256];
+  struct stat newbuf;
+  //重新读取 
+  DIR* rdir;
+  struct dirent* ritem;
+
+if(S_ISREG(buf.st_mode))//是一个普通文件的话，就停止递归返回
+{
+  printf("%s :",path);
+  return;
+}
+else 
+{
+    if((rdir=opendir(path))==NULL)
+  {
+
+        perror("fail to opendir!\n");
+        return ;                     
+  }
+ while((ritem=readdir(rdir))!=NULL)
+ {
+   stat(path,&newbuf);
+  if(S_ISREG(newbuf.st_mode))//如果是一个普通文件的话就return
+  {
+    return;
+  }
+  else 
+  {
+    //是一个目录就继续递归下去
+    sprintf(mpath,"%s/%s",temp,ritem->d_name);
+    display_Rflag(mpath,ritem->d_name,newbuf);
+  }
+ }
+}
+   printf("\n"); 
+}
+
+
+
 
 void display_dir(char *dir)//显示目录下的所有文件，同时判断是否有-a选项，里面的是目录的路径名，有相对路径，也有绝对路径
 {
@@ -275,8 +322,8 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
     }
     int cnt=0;
     getfilename(dir,&cnt);//得到目录下文件的名字以及时间
-    gettime(&cnt,dir);
-    sortbyletter(&cnt);
+    gettime(cnt,dir);
+    sortbyletter(cnt);
     int j=0;
        for(j=0;j<cnt;j++)
        {
@@ -298,7 +345,10 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
             display_file(fname,filename[j]);//把文件的秘密打印出来,第一个是目录的路径名，第二个是里面的文件名                                      
         }
 
-
+          else if(Rflag)//出现了-R选项
+          {
+            display_Rflag(fname,filename[j],buf);//fname里面是路径名，filename[j]里面都是文件
+          }
           else if(iflag)//出现了-i选项就执行
           {
 
@@ -363,6 +413,9 @@ void judge_mode(int argc,char*argv[],int ch,char *s)
                    case 't':
                         tflag=1;
                         break;
+                   case 'R':
+                        Rflag=1;
+                        break;
                    default:  
                         printf("wrong option:%c\n",optopt);
                         return ;
@@ -382,7 +435,7 @@ int main(int argc,char *argv[])
       //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
       //optind默认是1，调用一次getopt就会+1
       // 判断是否带有参数 
-        judge_mode(argc,argv,ch,"liasrt");
+        judge_mode(argc,argv,ch,"liasrtR");
           
       // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
        if(argc==1||*argv[argc-1]=='-')             
