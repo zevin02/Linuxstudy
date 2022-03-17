@@ -1,14 +1,8 @@
-#include <stdio.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <pwd.h>
-#include <grp.h>
-#include<string.h>
-#include<stdlib.h>
-int aflag = 0,lflag = 0;//作为标识符，如果aflag lflag为1则有-a和-l这个参数，执行选项
+#include"ls.h"
+//打印颜色
+
+int aflag=0;
+int lflag=0;//作为标识符，如果aflag lflag为1则有-a和-l这个参数，执行选项
 int iflag=0;
 int sflag=0;
 int rflag=0;
@@ -16,7 +10,6 @@ int tflag=0;
 int Rflag=0;
 char filename[256][260];
 long filetime[256];
-//打印颜色
 void print(struct stat buf,char* filename)
 {
                 if(S_ISREG(buf.st_mode))//一般文件
@@ -264,48 +257,6 @@ void gettime(int cnt,char* dir)//获得时间的数字
 }
 
 
-void display_Rflag(char* path,char *filename,struct stat buf)
-{
-  char temp[256];
-  strcpy(temp,path);
-  char mpath[256];
-  struct stat newbuf;
-  //重新读取 
-  DIR* rdir;
-  struct dirent* ritem;
-
-if(S_ISREG(buf.st_mode))//是一个普通文件的话，就停止递归返回
-{
-  printf("%s :",path);
-  return;
-}
-else 
-{
-    if((rdir=opendir(path))==NULL)
-  {
-
-        perror("fail to opendir!\n");
-        return ;                     
-  }
- while((ritem=readdir(rdir))!=NULL)
- {
-   stat(path,&newbuf);
-  if(S_ISREG(newbuf.st_mode))//如果是一个普通文件的话就return
-  {
-    return;
-  }
-  else 
-  {
-    //是一个目录就继续递归下去
-    sprintf(mpath,"%s/%s",temp,ritem->d_name);
-    display_Rflag(mpath,ritem->d_name,newbuf);
-  }
- }
-}
-   printf("\n"); 
-}
-
-
 
 
 void display_dir(char *dir)//显示目录下的所有文件，同时判断是否有-a选项，里面的是目录的路径名，有相对路径，也有绝对路径
@@ -347,7 +298,7 @@ void display_dir(char *dir)//显示目录下的所有文件，同时判断是否
 
           else if(Rflag)//出现了-R选项
           {
-            display_Rflag(fname,filename[j],buf);//fname里面是路径名，filename[j]里面都是文件
+            //display_Rflag(fname,filename[j],buf);//fname里面是路径名，filename[j]里面都是文件
           }
           else if(iflag)//出现了-i选项就执行
           {
@@ -423,51 +374,49 @@ void judge_mode(int argc,char*argv[],int ch,char *s)
           }
 }
 
-
-
-int main(int argc,char *argv[])
+void IsFile(char* dir)
 {
-    int ch,i;
-    struct stat buf;//用来记录文件的信息
+  int ret=0;
+  struct stat buf;
+  ret=stat(dir,&buf);
+  if(ret=-1)
+  {
+    perror("stat error");
+    return;
+  }
+  if(S_ISDIR(buf.st_mode))//是目录就继续遍历
+  {
+   dp_R(dir);//是目录就继续下去递归
+  }
+  
+  print(buf,dir);
+}
 
-      //opterr = 0;
-      //解析命令
-      //用来解析命令行参数命令,控制是否向STDERR打印错误。为0，则关闭打印
-      //optind默认是1，调用一次getopt就会+1
-      // 判断是否带有参数 
-        judge_mode(argc,argv,ch,"liasrtR");
-          
-      // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
-       if(argc==1||*argv[argc-1]=='-')             
-          display_dir(".");
-          
-            for(i = optind; i < argc ; i++) //ls name1 name2....，从optind开始执行,执行后面的文件名字
-           {
-               if(stat(argv[i],&buf)==-1)//stat,判断的结果不成立，我们就直接返回-1，结束循环
-              {
-                 // perror("cannot access argv[i]!\n");
-                  printf("cannot access %s!\n",argv[i]);
-                  printf(": No such file or directory\n ");
-                  return -1;
-              }
-               if(S_ISDIR(buf.st_mode))//是目录，判断此路径下有目录文件,里面的参数是st_mode
-              {
-                  printf("%s:\n",argv[i]);
-                  display_dir(argv[i]);//就对其进行打印, 对后面的参数,答应argv[i]代表的目录
-              }
-              else//file，为文件
-              {
-              if(lflag)//ls -l file,只打印一个
-              {
-                display_file(argv[i],argv[i]);//显示文件信息
-              }
-              else// ls file
-              {
-                print(buf,argv[i]);
-              } 
-              }
-           }
-        printf("\n"); 
-      return 0;
- }
+
+void dp_R(char*dir)
+{
+  char path[256];
+  DIR *dir_R;
+  struct dirent * dp;
+  dir_R=opendir(dir);
+  if(dp==NULL)
+  {
+    perror("opendir error");
+    return;
+  }
+  while(dp=readdir(dir_R))
+  {
+    if(strcmp(dp->d_name,".")==0||strcmp(dp->d_name,".."))
+    {
+      continue;
+    }
+    sprintf(path,"%s/%s",dir,dp->d_name);
+    IsFile(path);
+  }
+  closedir(dir_R);
+  return;
+}
+
+
+
 
