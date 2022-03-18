@@ -22,8 +22,9 @@ extern int Rflag;
 extern char filename[256][260];
 extern long filetime[256];
 
-void IsFile(char* dir);
-void dp_R(char*dir);
+void read_dir(char *dir);
+
+void isFile(char *name,char*filename);
 void print(struct stat buf,char* filename);
 void display_rights(struct stat buf);
 void display_mode(struct stat buf);
