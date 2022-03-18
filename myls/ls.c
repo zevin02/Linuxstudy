@@ -374,49 +374,79 @@ void judge_mode(int argc,char*argv[],int ch,char *s)
           }
 }
 
-void IsFile(char* dir)
-{
-  int ret=0;
-  struct stat buf;
-  ret=stat(dir,&buf);
-  if(ret=-1)
-  {
-    perror("stat error");
-    return;
-  }
-  if(S_ISDIR(buf.st_mode))//是目录就继续遍历
-  {
-   dp_R(dir);//是目录就继续下去递归
-  }
-  
-  print(buf,dir);
-}
 
 
-void dp_R(char*dir)
+void isFile(char *name,char*filename)
 {
-  char path[256];
-  DIR *dir_R;
-  struct dirent * dp;
-  dir_R=opendir(dir);
-  if(dp==NULL)
-  {
-    perror("opendir error");
-    return;
-  }
-  while(dp=readdir(dir_R))
-  {
-    if(strcmp(dp->d_name,".")==0||strcmp(dp->d_name,".."))
+    int ret = 0;
+    struct stat sb;
+    ret = stat(name, &sb);
+    if(S_ISDIR(sb.st_mode))
     {
-      continue;
+      printf("%s: \n",name);
+     
+    if(ret == -1)
+          {
+                perror("stat error\n");
+                    return;
+          }
+    DIR*dp;
+    struct dirent* sdp;
+    dp=opendir(name);
+    while(sdp=readdir(dp))
+    {
+                    if(strcmp(sdp->d_name,".") == 0 ||strcmp(sdp->d_name,"..") == 0||sdp->d_name[0]=='.')
+                    {
+                            continue;
+                                
+                    }
+printf("%s ",sdp->d_name);
     }
-    sprintf(path,"%s/%s",dir,dp->d_name);
-    IsFile(path);
-  }
-  closedir(dir_R);
-  return;
+    printf("\n");
+                  //是真就是目录//要考虑目录下还有目录
+                      read_dir(name);
+                  //        
+         closedir(dp);
+    }
+     else 
+     {
+       return;
+     }//          
+         //   printf("%s ",filename);//路径
+
 }
 
+void read_dir(char *dir)
+{
+    char path[256];
+      DIR *dp;
+        struct dirent *sdp;
+          dp = opendir(dir);
+            if(dp == NULL)
+            {
+                  perror("opendir error");
+                      return;
+                        
+            }
+              while(sdp = readdir(dp))
+              {
+                    if(strcmp(sdp->d_name,".") == 0 ||strcmp(sdp->d_name,"..") == 0||sdp->d_name[0]=='.')
+                    {
+                            continue;
+                                
+                    }
+
+                        //读这个目录项，继续判断是不是目录，如果是目录iu还得再进入，如果是文件就打印
+                        //    //ifFile(sdp->d_name);//不能直接这样，要绝对路径才可以
+                                sprintf(path, "%s/%s", dir, sdp->d_name);
+                                isFile(path,sdp->d_name);
+
+              }
+printf("\n");
+                closedir(dp);
+                  return;
+
+}
 
 
 
