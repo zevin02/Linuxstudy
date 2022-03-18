@@ -395,12 +395,14 @@ void isFile(char *name,char*filename)
     dp=opendir(name);
     while(sdp=readdir(dp))
     {
+            stat(name,&sb);
                     if(strcmp(sdp->d_name,".") == 0 ||strcmp(sdp->d_name,"..") == 0||sdp->d_name[0]=='.')
                     {
                             continue;
                                 
                     }
-printf("%s ",sdp->d_name);
+          //  print(sb,sdp->d_name);                        
+            printf("%s ",sdp->d_name);
     }
     printf("\n");
                   //是真就是目录//要考虑目录下还有目录
@@ -418,7 +420,7 @@ printf("%s ",sdp->d_name);
 
 void read_dir(char *dir)
 {
-    char path[256];
+    char path[PATH_MAX];
       DIR *dp;
         struct dirent *sdp;
           dp = opendir(dir);
@@ -430,6 +432,7 @@ void read_dir(char *dir)
             }
               while(sdp = readdir(dp))
               {
+                
                     if(strcmp(sdp->d_name,".") == 0 ||strcmp(sdp->d_name,"..") == 0||sdp->d_name[0]=='.')
                     {
                             continue;
