@@ -394,21 +394,28 @@ void isFile(char *name,char*filename)
     DIR*dp;
     struct dirent* sdp;
     dp=opendir(name);
+   //先收集名字再排序
     while(sdp=readdir(dp))
+
     {
       sprintf(fname,"%s/%s",name,sdp->d_name);
             stat(fname,&sb);
+            if(aflag==0)
+            {
                     if(strcmp(sdp->d_name,".") == 0 ||strcmp(sdp->d_name,"..") == 0||sdp->d_name[0]=='.')
                     {
                             continue;
                                 
                     }
-            print(sb,sdp->d_name);                        
+            }
+            else 
+
+                    print(sb,sdp->d_name);                        
           //  printf("%s ",sdp->d_name);
     }
     printf("\n");
                   //是真就是目录//要考虑目录下还有目录
-                      read_dir(name);
+                      display_R(name);
                   //        
          closedir(dp);
     }
@@ -420,7 +427,7 @@ void isFile(char *name,char*filename)
 
 }
 
-void read_dir(char *dir)
+void display_R(char *dir)
 {
     char path[PATH_MAX];
       DIR *dp;
@@ -443,9 +450,9 @@ void read_dir(char *dir)
 
                         //读这个目录项，继续判断是不是目录，如果是目录iu还得再进入，如果是文件就打印
                         //    //ifFile(sdp->d_name);//不能直接这样，要绝对路径才可以
-                                sprintf(path, "%s/%s", dir, sdp->d_name);
-                                isFile(path,sdp->d_name);
-
+                             sprintf(path, "%s/%s", dir, sdp->d_name);
+                             isFile(path,sdp->d_name);
+                   
               }
 printf("\n");
                 closedir(dp);
