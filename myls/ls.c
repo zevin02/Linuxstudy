@@ -378,6 +378,7 @@ void judge_mode(int argc,char*argv[],int ch,char *s)
 
 void isFile(char *name,char*filename)
 {
+  char fname[256];
     int ret = 0;
     struct stat sb;
     ret = stat(name, &sb);
@@ -395,14 +396,15 @@ void isFile(char *name,char*filename)
     dp=opendir(name);
     while(sdp=readdir(dp))
     {
-            stat(name,&sb);
+      sprintf(fname,"%s/%s",name,sdp->d_name);
+            stat(fname,&sb);
                     if(strcmp(sdp->d_name,".") == 0 ||strcmp(sdp->d_name,"..") == 0||sdp->d_name[0]=='.')
                     {
                             continue;
                                 
                     }
-          //  print(sb,sdp->d_name);                        
-            printf("%s ",sdp->d_name);
+            print(sb,sdp->d_name);                        
+          //  printf("%s ",sdp->d_name);
     }
     printf("\n");
                   //是真就是目录//要考虑目录下还有目录
