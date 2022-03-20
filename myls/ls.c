@@ -378,7 +378,7 @@ void judge_mode(int argc,char*argv[],int ch,char *s)
 
 void isFile(char *name,char*filename)
 {
-  char fname[256];
+    char fname[PATH_MAX];
     int ret = 0;
     struct stat sb;
     ret = stat(name, &sb);
@@ -408,7 +408,6 @@ void isFile(char *name,char*filename)
                                 
                     }
             }
-            else 
 
                     print(sb,sdp->d_name);                        
           //  printf("%s ",sdp->d_name);
@@ -430,9 +429,9 @@ void isFile(char *name,char*filename)
 void display_R(char *dir)
 {
     char path[PATH_MAX];
-      DIR *dp;
-        struct dirent *sdp;
-          dp = opendir(dir);
+    DIR *dp;
+    struct dirent *sdp;
+       dp = opendir(dir);
             if(dp == NULL)
             {
                   perror("opendir error");

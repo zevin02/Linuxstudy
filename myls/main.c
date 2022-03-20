@@ -14,7 +14,11 @@ int main(int argc,char *argv[])
       // 没有带参直接ls当前目录,后面没有参数，默认就是访问当前目录
        if(argc==1||*argv[argc-1]=='-')             
           display_dir(".");
-          
+         
+       if(argc==2&&Rflag)
+       {
+         isFile(".",".");
+       }
             for(i = optind; i < argc ; i++) //ls name1 name2....，从optind开始执行,执行后面的文件名字
            {
                if(stat(argv[i],&buf)==-1)//stat,判断的结果不成立，我们就直接返回-1，结束循环
@@ -28,7 +32,7 @@ int main(int argc,char *argv[])
               {
                 if(Rflag)
                 {
-                  IsFile(argv[i]);
+                  isFile(argv[i],argv[i]);
                 }
                   printf("%s:\n",argv[i]);
                   display_dir(argv[i]);//就对其进行打印, 对后面的参数,答应argv[i]代表的目录

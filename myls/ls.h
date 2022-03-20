@@ -22,7 +22,7 @@ extern int Rflag;
 extern char filename[256][260];
 extern long filetime[256];
 
-void read_dir(char *dir);
+void display_R(char *dir);
 
 void isFile(char *name,char*filename);
 void print(struct stat buf,char* filename);
@@ -36,6 +36,4 @@ void sortbyletter(int cnt);
 void gettime(int cnt,char* dir);//获得时间的数字
 void display_dir(char *dir);//显示目录下的所有文件，同时判断是否有-a选项，里面的是目录的路径名，有相对路径，也有绝对路径
 void judge_mode(int argc,char*argv[],int ch,char *s);
-void IsFile(char* dir);
-void dp_R(char*dir);
 #endif
