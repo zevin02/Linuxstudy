@@ -381,7 +381,7 @@ void isFile(char *name,char*filename)
     char fname[PATH_MAX];
     int ret = 0;
     struct stat sb;
-    ret = stat(name, &sb);
+    ret = lstat(name, &sb);
     if(S_ISDIR(sb.st_mode))
     {
       printf("%s: \n",name);
@@ -394,12 +394,16 @@ void isFile(char *name,char*filename)
     DIR*dp;
     struct dirent* sdp;
     dp=opendir(name);
+    if(dp==NULL)
+    {
+      return;
+    }
    //先收集名字再排序
     while(sdp=readdir(dp))
 
     {
       sprintf(fname,"%s/%s",name,sdp->d_name);
-            stat(fname,&sb);
+        lstat(fname,&sb);
             if(aflag==0)
             {
                     if(strcmp(sdp->d_name,".") == 0 ||strcmp(sdp->d_name,"..") == 0||sdp->d_name[0]=='.')
