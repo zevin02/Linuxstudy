@@ -8,6 +8,7 @@ int main()
   pid_t id=fork();
   if(id==0)
   {
+    int a=10;
     //child
     int cnt=5;
     while(cnt){
@@ -17,6 +18,7 @@ int main()
       //子进程会持续5秒之后就exit，但是父进程；立刻就退出了
       //子进程就会变成一个孤儿进程，被系统领养
     }
+    a/=0;
     exit(10);//我们执行完子进程之后直接退出，不执行父进程的代码
     //进程退出
     //父进程拿到司马status结果，一等和子进程如何退出强相关！！！！
@@ -36,7 +38,8 @@ int main()
   int status=0;
   pid_t ret=waitpid(id,&status,0);//第一个是其等待的进程的pid
   if(ret>0)
-    printf("father wait %d, status: %d \n ",ret,status);//可以获得这个输出性参数
+    printf("father wait %d, status exit code : %d ,status exit signal :%d \n ",ret,(status>>8)&0xff,status&0x7f);//可以获得这个输出性参数
+  //低8位是退出码，第七位是退出信号
   else 
     printf("father wait fail\n");
   //到这里僵尸状态就没了
