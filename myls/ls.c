@@ -445,6 +445,9 @@ void display_R(char *dir)
 
     //读这个目录项，继续判断是不是目录，如果是目录iu还得再进入，如果是文件就打印
     //    //ifFile(sdp->d_name);//不能直接这样，要绝对路径才可以
+     if (strcmp(dir, "/") == 0)
+      sprintf(path, "/%s", sdp->d_name);
+    else    
     sprintf(path, "%s/%s", dir, sdp->d_name);
     isFile(path, sdp->d_name);
   }
