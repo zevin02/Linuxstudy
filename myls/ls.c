@@ -380,7 +380,7 @@ void isFile(char *name, char *filename)
   ret = lstat(name, &sb);
   if (S_ISDIR(sb.st_mode))
   {
-    printf("%s: \n", name);
+    printf("%s: \n",name);
 
     if (ret == -1)
     {
@@ -392,9 +392,11 @@ void isFile(char *name, char *filename)
     dp = opendir(name);
     //先收集名字再排序
     if (dp == NULL)
+
     {
       return;
     }
+    //先收集名字再排序
     while (sdp = readdir(dp))
 
     {
@@ -420,41 +422,42 @@ void isFile(char *name, char *filename)
     //
     closedir(dp);
   }
-  else
-  {
-    return;
-  } //
-    //   printf("%s ",filename);//路径
-}
-
-void display_R(char *dir)
-{
-  char path[PATH_MAX];
-  DIR *dp;
-  struct dirent *sdp;
-  dp = opendir(dir);
-  if (dp == NULL)
-  {
-    perror("opendir error");
-    return;
-  }
-  while (sdp = readdir(dp))
-  {
-
-    if (strcmp(sdp->d_name, ".") == 0 || strcmp(sdp->d_name, "..") == 0 || sdp->d_name[0] == '.')
-    {
-      continue;
-    }
-
-    //读这个目录项，继续判断是不是目录，如果是目录iu还得再进入，如果是文件就打印
-    //    //ifFile(sdp->d_name);//不能直接这样，要绝对路径才可以
-    if (strcmp(dir, "/") == 0)
-      sprintf(path, "/%s", sdp->d_name);
     else
-      sprintf(path, "%s/%s", dir, sdp->d_name);
-      isFile(path, sdp->d_name);
+    {
+      return;
+    } //
+      //   printf("%s ",filename);//路径
   }
-  printf("\n");
-  closedir(dp);
-  return;
-}
+  void display_R(char *dir)
+  {
+    char path[PATH_MAX];
+    DIR *dp;
+    struct dirent *sdp;
+    dp = opendir(dir);
+    if (dp == NULL)
+    {
+      perror("opendir error");
+      return;
+    }
+    while (sdp = readdir(dp))
+    {
+
+      if (strcmp(sdp->d_name, ".") == 0 || strcmp(sdp->d_name, "..") == 0 || sdp->d_name[0] == '.')
+      {
+        continue;
+      }
+
+      //读这个目录项，继续判断是不是目录，如果是目录iu还得再进入，如果是文件就打印
+      //    //ifFile(sdp->d_name);//不能直接这样，要绝对路径才可以
+
+      if (strcmp(dir, "/") == 0)
+        sprintf(path, "/%s", sdp->d_name);
+      else
+        sprintf(path, "%s/%s", dir, sdp->d_name);
+
+      isFile(path, sdp->d_name);
+    }
+    printf("\n");
+    closedir(dp);
+    return;
+  }
