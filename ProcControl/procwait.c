@@ -36,12 +36,21 @@ int main()
   //没有任何区别
   //pid_t ret=waitpid(-1,NULL,0);//id=-1，就是等待任意一个子进程，如果有很多子进程，他就只会等待任意一个子进程
   int status=0;
-  pid_t ret=waitpid(id,&status,0);//第一个是其等待的进程的pid
-  if(ret>0)
-    printf("father wait %d, status exit code : %d ,status exit signal :%d \n ",ret,(status>>8)&0xff,status&0x7f);//可以获得这个输出性参数
-  //低8位是退出码，第七位是退出信号
-  else 
-    printf("father wait fail\n");
+  //第3个参数option，0为默认行为，阻塞等待
+  pid_t ret=waitpid(id,&status,0);//第一个是其等待的进程的pid,也可以回收僵尸进程
+//  if(ret>0)
+//    printf("father wait %d, status exit code : %d ,status exit signal :%d \n ",ret,(status>>8)&0xff,status&0x7f);//可以获得这个输出性参数
+//  //低8位是退出码，第七位是退出信号
+//  else 
+//    printf("father wait fail\n");
+   if(WIFEXITED(status))
+   {
+     printf("exit code :%d \n",WEXITSTATUS(status));
+   }
+   else 
+   {
+     printf("error get a signal\n");
+   }
   //到这里僵尸状态就没了
   sleep(10);
   //回收完毕之后父进程继续活上10秒
