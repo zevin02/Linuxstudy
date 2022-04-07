@@ -1,5 +1,5 @@
-minishell:minishell.c
-		gcc minishell.c -o minishell -g
+myshell:myshell.c
+		gcc myshell.c -o myshell -g
 .PHONY:clean
 clean:
-		rm -f minishell
+		rm -f myshell
