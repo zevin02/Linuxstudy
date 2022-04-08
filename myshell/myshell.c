@@ -7,6 +7,23 @@
 #define  CMD_NUM 64
 
 //解释器的本质，先给一个提示符，在获取你的不断输入
+
+void DoFarProcess(char* filename,char*argv[],int* flag)
+{
+    *flag=1;
+    if(strcmp(filename,"cd")==0)
+    {
+      //内建命令
+      if(argv[1])
+      {
+        //更改目录
+        chdir(argv[1]);
+      }
+
+    }
+
+}
+
 int main()
 {
   //一定是一个死循环程序
@@ -44,16 +61,12 @@ int main()
     //相当于调用了自己的一个函数
    
     //检测命令是否需要shell自己去执行
-    if(strcmp(argv[0],"cd")==0)
+    
+    int flag=0;
+    DoFarProcess(argv[0],argv,&flag);
+    if(flag)
     {
-      //内建命令
-      if(argv[1])
-      {
-        //更改目录
-        chdir(argv[1]);
-        continue;
-      }
-
+      continue;
     }
 
     
