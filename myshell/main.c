@@ -58,7 +58,9 @@ int main()
       execvp(argv[0],argv);
       exit(1);
     }
-    waitpid(-1,NULL,0);
+    int status=0;
+    waitpid(-1,&status,0);//等待任意一个进程
+    printf("exit code: %d \n",WEXITSTATUS(status));//得到退出码
 
   // for(i=0;argv[i];i++)
   // {
