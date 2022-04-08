@@ -1,28 +1,8 @@
-#include <stdio.h>
-#include<unistd.h>
-#include <sys/wait.h>
-#include<stdlib.h>
-#include<string.h>
-#define  NUM 128
-#define  CMD_NUM 64
+#include"myshell.h"
 
 //解释器的本质，先给一个提示符，在获取你的不断输入
 
-void DoFarProcess(char* filename,char*argv[],int* flag)
-{
-    *flag=1;
-    if(strcmp(filename,"cd")==0)
-    {
-      //内建命令
-      if(argv[1])
-      {
-        //更改目录
-        chdir(argv[1]);
-      }
 
-    }
-
-}
 
 int main()
 {
@@ -33,7 +13,7 @@ int main()
   char*argv[CMD_NUM]={NULL};
     //1.打印提示符号
     command[0]=0;//用这样的方式，可以做到以O(1)的时间复杂度，清空字符串，因为c语言以\0结尾
-    printf("[who@myhostname minishell]# ");
+    printf("[xzw-super-shell]# ");
     fflush(stdout);//因为没有\n所以不会刷新，把输入缓冲区给清空
     //想办法把在命令行上的一个一个参数，获取到
     //获取命令字符串
@@ -61,19 +41,20 @@ int main()
     //相当于调用了自己的一个函数
    
     //检测命令是否需要shell自己去执行
-    
-    int flag=0;
-    DoFarProcess(argv[0],argv,&flag);
-    if(flag)
+        
+    if(IsFarDo(argv[0]))
     {
-      continue;
-    }
-
-    
+    DoFarProcess(argv[0],argv);
+    continue;
+    } 
     //5.执行第3方命令
     if(fork()==0)//这里我们touch东西，cd的话都是子进程，但是我们需要让父进程去进行这些操作
     {
       //fork执行的是第三方命令，独立的命令
+      if(argv[0]=="|")
+      {
+        Do_pipe(argv);
+      }
       execvp(argv[0],argv);
       exit(1);
     }
