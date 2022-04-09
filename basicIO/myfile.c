@@ -41,13 +41,22 @@ int main()
   
   fclose(fp);
   #endif
-  int fd=open("./lg.txt",O_WRONLY|O_CREAT);//以只写方式打开,如果文件不存在，就会帮助我们创建一个
-  //相当于C语言中的w选项,
+  //路径选项参数
+  int fd=open("./g.txt",O_WRONLY|O_CREAT,0644);//一次传递两个标志位
+  int fd1=open("./g1.txt",O_WRONLY|O_CREAT,0644);//一次传递两个标志位
+  int fd2=open("./g2.txt",O_WRONLY|O_CREAT,0644);//一次传递两个标志位
+  int fd3=open("./g3.txt",O_WRONLY|O_CREAT,0644);//一次传递两个标志位
+  //以只写方式打开,如果文件不存在，就会帮助我们创建一个
+  //相当于C语言中的w选项,0644以二进制的方式显示权限
   if(fd<0)
   {
     //打开文件失败
     printf("open err\n");
   }
+  printf("fd:%d\n",fd);
+  printf("fd:%d\n",fd1);
+  printf("fd:%d\n",fd2);
+  printf("fd:%d\n",fd3);
   close(fd);//文件就关掉了
   return 0;
 }
