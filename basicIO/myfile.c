@@ -53,6 +53,9 @@ int main()
     //打开文件失败
     printf("open err\n");
   }
+
+
+  
   printf("fd:%d\n",fd);
   printf("fd:%d\n",fd1);
   printf("fd:%d\n",fd2);
