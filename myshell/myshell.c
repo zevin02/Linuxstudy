@@ -26,9 +26,14 @@ void Do_cd(char* filename,char*argv[])
     {
         chdir(argv[1]);
     }
+    else
+    {
+        chdir("/home/xvzewen");
+    }
 }
 
-void Do_pipe(char*argv[])
+
+void my_signal()
 {
-    
+    signal(SIGINT,SIG_IGN);
 }
