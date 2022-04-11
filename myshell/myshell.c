@@ -49,16 +49,13 @@ void DoRedefDir(char*argv[],int size,int youpos,char*command)
     //fork->child -> dup2(fd,1)->exec
     //>会清空原来的内容，还会创建新文件，以写的方式打开
     int fd;
-    int outflag;
     if(strcmp(command,">")==0)
     {
       fd=open(argv[size-1],O_WRONLY|O_CREAT|O_TRUNC,0666);
-      outflag=1;
     }
     if(strcmp(command,">>")==0)
     {
       fd=open(argv[size-1],O_WRONLY|O_CREAT|O_APPEND,0666);
-      outflag=1;
     }
     if(fd<0)
     {
@@ -67,11 +64,8 @@ void DoRedefDir(char*argv[],int size,int youpos,char*command)
     
     }
     int oldfd;
-    if(outflag==1)
-    {
     oldfd=dup(1);
     dup2(fd,1);
-    }
     char*tmp[youpos+1];
     for(int i=0;i<youpos;i++)
     {
@@ -84,10 +78,7 @@ void DoRedefDir(char*argv[],int size,int youpos,char*command)
     }
 
     waitpid(-1,NULL,0);
-    if(outflag==1)
-    {
     dup2(oldfd,1);
-    }
 }
 
 void DoFarProcess(char *filename, char *argv[])
