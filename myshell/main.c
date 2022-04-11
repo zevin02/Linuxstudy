@@ -20,7 +20,6 @@ int main()
     //获取命令字符串
     fgets(command, NUM, stdin); //从标准输入流里面读取数据，command里面就是我们想要的东西了
     //会发现空了一行，是因为回车也是一个字符
-    fflush(stdout);
     command[strlen(command) - 1] = '\0'; //把\n赋成0，就把\n给吞掉了
                                          //解析命令字符串
                                          //"ls -a -l \0"
@@ -60,9 +59,9 @@ int main()
     //   //  }
     //   execvp(argv[0], argv);
     //   exit(1);
-    int status = 0;
-    waitpid(-1, &status, 0);                         //等待任意一个进程
-    printf("exit code: %d \n", WEXITSTATUS(status)); //得到退出码
+    //int status = 0;
+    //waitpid(-1, &status, 0);                         //等待任意一个进程
+    //printf("exit code: %d \n", WEXITSTATUS(status)); //得到退出码
   }
 
   // for(i=0;argv[i];i++)

@@ -13,9 +13,16 @@ void CommandAnalys(char *argv[],int size)
     {
         if(strcmp(argv[i],">")==0)
         {
-            DoRedefDir(argv,size,i);
+            DoRedefDir(argv,size,i,argv[i]);
             flag=1;
             break;
+        
+        }
+        if(strcmp(argv[i],">>")==0)
+        {
+          DoRedefDir(argv,size,i,argv[i]);
+           flag=1;
+          break;
         }
     }
     if(flag)
@@ -32,33 +39,57 @@ void CommandAnalys(char *argv[],int size)
         execvp(argv[0], argv);
         exit(1);
     }
+    waitpid(-1,NULL,0);
 }
 
 
-void DoRedefDir(char*argv[],int size,int youpos)
+void DoRedefDir(char*argv[],int size,int youpos,char*command)
 {
     //echo "hello"> file
     //fork->child -> dup2(fd,1)->exec
     //>会清空原来的内容，还会创建新文件，以写的方式打开
-    int fd=open(argv[size-1],O_WRONLY|O_CREAT|O_TRUNC);
-
-    int oldfd=dup(1);
-    dup2(fd,1);
-    int i=0;
-    char*tmp[youpos];
-    for(int i=0;i<youpos-1;i++)
+    int fd;
+    int outflag;
+    if(strcmp(command,">")==0)
     {
-        tmp[i]=argv[i];
+      fd=open(argv[size-1],O_WRONLY|O_CREAT|O_TRUNC,0666);
+      outflag=1;
     }
-    tmp[youpos-1]=NULL;
-
+    if(strcmp(command,">>")==0)
+    {
+      fd=open(argv[size-1],O_WRONLY|O_CREAT|O_APPEND,0666);
+      outflag=1;
+    }
+    if(fd<0)
+    {
+      perror("open");
+      exit(-1);
+    
+    }
+    int oldfd;
+    if(outflag==1)
+    {
+    oldfd=dup(1);
+    dup2(fd,1);
+    }
+    char*tmp[youpos+1];
+    for(int i=0;i<youpos;i++)
+    {
+      tmp[i]=argv[i];
+    }
+    tmp[youpos]=NULL;
     if(fork()==0)
     {
         execvp(argv[0],tmp);
     }
-    waitpid(-1,NULL,0);
 
+    waitpid(-1,NULL,0);
+    if(outflag==1)
+    {
+    dup2(oldfd,1);
+    }
 }
+
 void DoFarProcess(char *filename, char *argv[])
 {
 

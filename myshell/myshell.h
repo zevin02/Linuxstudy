@@ -4,7 +4,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include <stdlib.h>
-#include <readline/readline.h>
+//#include <readline/readline.h>
 #include<sys/types.h>
 #include<fcntl.h>
 #define  NUM 128
@@ -17,4 +17,4 @@ void Do_cd(char* filename,char*argv[]);//执行cd命令
 //void Do_pipe(char*argv[]);//子进程执行管道命令
 void my_signal();
 void PrintHint();
-void DoRedefDir(char*argv[],int size,int youpos);
+void DoRedefDir(char*argv[],int size,int youpos,char*command);
