@@ -6,7 +6,7 @@ void CommandAnalys(char *argv[], int size)
     //父进程执行的命令
     if (strcmp(argv[0], "cd") == 0)
     {
-        DoFarProcess(argv[0], argv);
+        Do_cd(argv[0],argv);
     }
     else if (strcmp(argv[0], "exit") == 0)
     {
@@ -22,7 +22,7 @@ void CommandAnalys(char *argv[], int size)
         //     //DoProcExit();
         //     return ;
         // }
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < size-1; i++)
         {
             if (strcmp(argv[i], ">") == 0)
             {
@@ -139,21 +139,15 @@ void DoRedefDir(char *argv[], int size, int youpos, char *command)
     close(fd);
 }
 
-//执行内置命令
-void DoFarProcess(char *filename, char *argv[])
-{
-
-    if (strcmp(filename, "cd") == 0)
-    {
-        //内建命令
-        Do_cd(filename, argv);
-    }
-}
-
 void Do_cd(char *filename, char *argv[])
 {
     if (argv[1])
-    {
+    { 
+        if(strcmp(argv[1],"~")==0)
+        {
+            chdir("/home/xvzewen");
+        }   
+        else    
         chdir(argv[1]);
     }
     else
