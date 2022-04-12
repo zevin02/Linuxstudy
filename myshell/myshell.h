@@ -7,8 +7,10 @@
 //#include <readline/readline.h>
 #include<sys/types.h>
 #include<fcntl.h>
+#include <signal.h>
 #define  NUM 128
 #define  CMD_NUM 64
+// #define SIG_IGN (void (*)())1
 
 void CommandAnalys(char*argv[],int size);
 int IsFarDo(char*filename);//判断是否需要父进程去执行
@@ -17,4 +19,6 @@ void Do_cd(char* filename,char*argv[]);//执行cd命令
 //void Do_pipe(char*argv[]);//子进程执行管道命令
 void my_signal();
 void PrintHint();
-void DoRedefDir(char*argv[],int size,int youpos,char*command);
+void DoRedefDir(char*argv[],int size,int rightpos,char*command);//实现输出重定向
+void DoInputRedef(char* argv[],int size,int leftpos,char*command);//输入重定向
+void DoProcExit();

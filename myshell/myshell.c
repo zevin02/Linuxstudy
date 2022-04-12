@@ -1,86 +1,145 @@
 #include "myshell.h"
 
-void CommandAnalys(char *argv[],int size)
+void CommandAnalys(char *argv[], int size)
+// argv{"touch ","a","NULL"}
 {
-    if (IsFarDo(argv[0]))
+    //父进程执行的命令
+    if (strcmp(argv[0], "cd") == 0)
     {
         DoFarProcess(argv[0], argv);
-
+    }
+    else if (strcmp(argv[0], "exit") == 0)
+    {
+        DoProcExit(); //进程退出
     }
     // 5.执行第3方命令
-    int flag=0;
-    for(int i=0;i<size;i++)
+    //子进程来执行的命令
+    else
     {
-        if(strcmp(argv[i],">")==0)
+        int flag = 0;
+        // if(strcmp(argv,"exit")==0)
+        // {
+        //     //DoProcExit();
+        //     return ;
+        // }
+        for (int i = 0; i < size; i++)
         {
-            DoRedefDir(argv,size,i,argv[i]);
-            flag=1;
-            break;
-        
+            if (strcmp(argv[i], ">") == 0)
+            {
+                DoRedefDir(argv, size, i, argv[i]);
+                flag = 1;
+                break;
+            }
+            if (strcmp(argv[i], ">>") == 0)
+            {
+                DoRedefDir(argv, size, i, argv[i]);
+                flag = 1;
+                break;
+            }
+            if (strcmp(argv[i], "<") == 0)
+            {
+                DoInputRedef(argv, size, i, argv[i]);
+                flag = 1;
+                break;
+            }
         }
-        if(strcmp(argv[i],">>")==0)
+
+        if (flag)
         {
-          DoRedefDir(argv,size,i,argv[i]);
-           flag=1;
-          break;
+            return;
+        }
+        else
+        {
+            pid_t id = fork();
+            if (id == 0) //这里我们touch东西，cd的话都是子进程，但是我们需要让父进程去进行这些操作
+            {
+                // fork执行的是第三方命令，独立的命令
+                //  if(argv[0]=="|")
+                //  {
+                //    Do_pipe(argv);
+                //  }
+                execvp(argv[0], argv);
+                exit(1);
+            }
+            waitpid(id, NULL, 0);
         }
     }
-    if(flag)
-    {
-        return;
-    }
-    if (fork() == 0) //这里我们touch东西，cd的话都是子进程，但是我们需要让父进程去进行这些操作
-    {
-        // fork执行的是第三方命令，独立的命令
-        //  if(argv[0]=="|")
-        //  {
-        //    Do_pipe(argv);
-        //  }
-        execvp(argv[0], argv);
-        exit(1);
-    }
-    waitpid(-1,NULL,0);
 }
 
-
-void DoRedefDir(char*argv[],int size,int youpos,char*command)
+void DoProcExit()
 {
-    //echo "hello"> file
-    //fork->child -> dup2(fd,1)->exec
+    exit(0);
+}
+
+//输入重定向
+void DoInputRedef(char *argv[], int size, int leftpos, char *command)
+{
+    // cat < log.txt
+    //先fork子进程，把0改掉，用log.txt的fd，读书log.txt里面内容
+    int fd = open(argv[size - 1], O_RDONLY);
+    int oldfd = dup(0);
+    char *tmp[leftpos + 1];
+    dup2(fd, 0);
+    for (int i = 0; i < leftpos; i++)
+    {
+        tmp[i] = argv[i];
+    }
+    tmp[leftpos] = NULL;
+    if (fork() == 0)
+    {
+        char line[128];
+
+        // while (fgets(line, sizeof(line) - 1, stdin))
+        // {
+        //     printf("%s\n", line);
+        // }
+        execvp(argv[0], tmp);
+    }
+    waitpid(-1, NULL, 0);
+    dup2(oldfd, 0);
+    close(fd);
+}
+
+//输出重定向与追加重定向
+void DoRedefDir(char *argv[], int size, int youpos, char *command)
+{
+    // echo "hello"> file
+    // fork->child -> dup2(fd,1)->exec
     //>会清空原来的内容，还会创建新文件，以写的方式打开
     int fd;
-    if(strcmp(command,">")==0)
+    if (strcmp(command, ">") == 0)
     {
-      fd=open(argv[size-1],O_WRONLY|O_CREAT|O_TRUNC,0666);
+        fd = open(argv[size - 1], O_WRONLY | O_CREAT | O_TRUNC, 0666);
     }
-    if(strcmp(command,">>")==0)
+    if (strcmp(command, ">>") == 0)
     {
-      fd=open(argv[size-1],O_WRONLY|O_CREAT|O_APPEND,0666);
+        fd = open(argv[size - 1], O_WRONLY | O_CREAT | O_APPEND, 0666);
     }
-    if(fd<0)
+    if (fd < 0)
     {
-      perror("open");
-      exit(-1);
-    
+        perror("open");
+        exit(-1);
     }
     int oldfd;
-    oldfd=dup(1);
-    dup2(fd,1);
-    char*tmp[youpos+1];
-    for(int i=0;i<youpos;i++)
+    oldfd = dup(1);
+    dup2(fd, 1);
+    char *tmp[youpos + 1];
+    for (int i = 0; i < youpos; i++)
     {
-      tmp[i]=argv[i];
+        tmp[i] = argv[i];
     }
-    tmp[youpos]=NULL;
-    if(fork()==0)
+    tmp[youpos] = NULL;
+    if (fork() == 0)
     {
-        execvp(argv[0],tmp);
+        execvp(argv[0], tmp);
     }
 
-    waitpid(-1,NULL,0);
-    dup2(oldfd,1);
+    waitpid(-1, NULL, 0);
+    dup2(oldfd, 1);
+    close(fd);
 }
 
+//执行内置命令
 void DoFarProcess(char *filename, char *argv[])
 {
 
@@ -107,9 +166,9 @@ void my_signal()
 {
     signal(SIGINT, SIG_IGN);
 }
-int IsFarDo(char*filename)
+int IsFarDo(char *filename)
 {
-    if(strcmp(filename,"cd")==0||strcmp(filename,">")==0||strcmp(filename,">>")==0||strcmp(filename,"<")==0)
-    return 1;
+    if (strcmp(filename, "cd") == 0 || strcmp(filename, ">") == 0 || strcmp(filename, ">>") == 0 || strcmp(filename, "<") == 0)
+        return 1;
     return 0;
 }

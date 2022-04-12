@@ -24,7 +24,7 @@ int main()
                                          //解析命令字符串
                                          //"ls -a -l \0"
 
-    // printf("echo: %s\n",command);
+    // printf("echo: %s\n",command); 
     //获取command里面的每一个字符串，分割字符串
     // strtok截取字符串
     const char *sep = " ";
@@ -34,6 +34,7 @@ int main()
     {
       i++;
     }
+    
     // 已经完成解析了
     //执行命令
     //不能让父进程直接替换
@@ -42,13 +43,13 @@ int main()
     //相当于调用了自己的一个函数
 
     //检测命令是否需要shell自己去执行
-    CommandAnalys(argv,i);
+    CommandAnalys(argv, i+1);
 
-    if (IsFarDo(argv[0]))
-    {
-      // DoFarProcess(argv[0], argv);
-      continue;
-    }
+    // if (IsFarDo(argv[0]))
+    // {
+    //   // DoFarProcess(argv[0], argv);
+    //   continue;
+    // }
     // // 5.执行第3方命令
     // if (fork() == 0) //这里我们touch东西，cd的话都是子进程，但是我们需要让父进程去进行这些操作
     // {
@@ -59,9 +60,9 @@ int main()
     //   //  }
     //   execvp(argv[0], argv);
     //   exit(1);
-    //int status = 0;
-    //waitpid(-1, &status, 0);                         //等待任意一个进程
-    //printf("exit code: %d \n", WEXITSTATUS(status)); //得到退出码
+    // int status = 0;
+    // waitpid(-1, &status, 0);                         //等待任意一个进程
+    // printf("exit code: %d \n", WEXITSTATUS(status)); //得到退出码
   }
 
   // for(i=0;argv[i];i++)
