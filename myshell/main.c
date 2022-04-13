@@ -17,8 +17,8 @@ int main()
     char buf[100];
     getcwd(buf, sizeof(buf)); //打印路径
 
-    printf("%s with ", buf);
-    char *command = readline(BEGIN(49, 34) "xzw super shell $ " CLOSE);
+    printf("xzw super shell %s  ", buf);
+    char *command = readline(BEGIN(49, 34) " $ " CLOSE);
     if (command == NULL) //屏蔽ctrl d
     {
       continue;
