@@ -6,7 +6,7 @@ int main()
 {
   //一定是一个死循环程序
   my_signal();
-  // read_history(NULL);
+  read_history(NULL);
   for (;;)
   {
     // read_history(NULL);
