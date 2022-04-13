@@ -7,26 +7,40 @@ int main()
   //一定是一个死循环程序
   my_signal();
 
-  char command[NUM];
+  // char command[NUM];
   for (;;)
   {
     char *argv[CMD_NUM] = {NULL};
-    // 1.打印提示符号
-    command[0] = 0; //用这样的方式，可以做到以O(1)的时间复杂度，清空字符串，因为c语言以\0结尾
-    printf("[xzw-super-shell]# ");
+    //  1.打印提示符号
+    // command[0] = 0; //用这样的方式，可以做到以O(1)的时间复杂度，清空字符串，因为c语言以\0结尾
+    // printf("[xzw-super-shell]# ");
+    char *command = readline(BEGIN(49, 34) "xzw super shell $ " CLOSE);
+    add_history(argv);
+    if (command == NULL)
+    {
+      continue;
+    }
     // PrintHint();
-    fflush(stdout); //因为没有\n所以不会刷新，把输入缓冲区给清空
+    // fflush(stdout); //因为没有\n所以不会刷新，把输入缓冲区给清空
     //想办法把在命令行上的一个一个参数，获取到
     //获取命令字符串
-    fgets(command, NUM, stdin); //从标准输入流里面读取数据，command里面就是我们想要的东西了
+    // fgets(command, NUM, stdin); //从标准输入流里面读取数据，command里面就是我们想要的东西了
     //会发现空了一行，是因为回车也是一个字符
-    command[strlen(command) - 1] = '\0'; //把\n赋成0，就把\n给吞掉了
-                                         //解析命令字符串
-                                         //"ls -a -l \0"
+    if (argv == NULL)
+    {
+      continue;
+    }
+    // command[strlen(command) - 1] = '\0'; //把\n赋成0，就把\n给吞掉了
+    //解析命令字符串
+    //"ls -a -l \0"
 
-    // printf("echo: %s\n",command); 
+    // printf("echo: %s\n",command);
     //获取command里面的每一个字符串，分割字符串
     // strtok截取字符串
+    if (strlen(command) == 0)
+    {
+      continue;
+    }
     const char *sep = " ";
     argv[0] = strtok(command, sep);
     int i = 1;
@@ -34,7 +48,7 @@ int main()
     {
       i++;
     }
-    
+
     // 已经完成解析了
     //执行命令
     //不能让父进程直接替换
@@ -43,7 +57,11 @@ int main()
     //相当于调用了自己的一个函数
 
     //检测命令是否需要shell自己去执行
-    CommandAnalys(argv, i+1);
+    if (argv[0] == 0)
+    {
+      ;
+    }
+    CommandAnalys(argv, i);
 
     // if (IsFarDo(argv[0]))
     // {
@@ -63,6 +81,7 @@ int main()
     // int status = 0;
     // waitpid(-1, &status, 0);                         //等待任意一个进程
     // printf("exit code: %d \n", WEXITSTATUS(status)); //得到退出码
+    free(command);
   }
 
   // for(i=0;argv[i];i++)

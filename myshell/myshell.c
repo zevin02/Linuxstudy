@@ -3,12 +3,13 @@
 void CommandAnalys(char *argv[], int size)
 // argv{"touch ","a","NULL"}
 {
+
     //父进程执行的命令
-    if (strcmp(argv[0], "cd") == 0)
+    if (size != 0 && strcmp(argv[0], "cd") == 0)
     {
-        Do_cd(argv[0],argv);
+        Do_cd(argv[0], argv);
     }
-    else if (strcmp(argv[0], "exit") == 0)
+    else if (size != 0 && strcmp(argv[0], "exit") == 0)
     {
         DoProcExit(); //进程退出
     }
@@ -22,7 +23,7 @@ void CommandAnalys(char *argv[], int size)
         //     //DoProcExit();
         //     return ;
         // }
-        for (int i = 0; i < size-1; i++)
+        for (int i = 0; i < size; i++)
         {
             if (strcmp(argv[i], ">") == 0)
             {
@@ -142,13 +143,13 @@ void DoRedefDir(char *argv[], int size, int youpos, char *command)
 void Do_cd(char *filename, char *argv[])
 {
     if (argv[1])
-    { 
-        if(strcmp(argv[1],"~")==0)
+    {
+        if (strcmp(argv[1], "~") == 0)
         {
             chdir("/home/xvzewen");
-        }   
-        else    
-        chdir(argv[1]);
+        }
+        else
+            chdir(argv[1]);
     }
     else
     {
@@ -159,6 +160,7 @@ void Do_cd(char *filename, char *argv[])
 void my_signal()
 {
     signal(SIGINT, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
 }
 int IsFarDo(char *filename)
 {
