@@ -31,22 +31,35 @@ void CommandAnalys(char *argv[], int size)
         {
             if (strcmp(argv[i], ">") == 0)
             {
+                if(strcmp(argv[0],"ls")==0)
+                {
+                    size--;
+                }
                 DoRedefDir(argv, size, i, argv[i]);
                 flag = 1;
                 break;
             }
             if (strcmp(argv[i], ">>") == 0)
             {
+                if(strcmp(argv[0],"ls")==0)
+                {
+                    size--;
+                }
                 DoRedefDir(argv, size, i, argv[i]);
                 flag = 1;
                 break;
             }
             if (strcmp(argv[i], "<") == 0)
             {
+                if(strcmp(argv[0],"ls")==0)
+                {
+                    size--;
+                }
                 DoInputRedef(argv, size, i, argv[i]);
                 flag = 1;
                 break;
             }
+            
         }
 
         if (flag)

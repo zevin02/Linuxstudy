@@ -14,6 +14,10 @@ int main()
     //  1.打印提示符号
     // command[0] = 0; //用这样的方式，可以做到以O(1)的时间复杂度，清空字符串，因为c语言以\0结尾
     // printf("[xzw-super-shell]# ");
+    char buf[100];
+    getcwd(buf,sizeof(buf));//打印路径
+
+    printf("%s with ",buf);
     char *command = readline(BEGIN(49, 34) "xzw super shell $ " CLOSE);
     add_history(command);
     write_history(NULL);
@@ -49,7 +53,11 @@ int main()
     //相当于调用了自己的一个函数
 
     //检测命令是否需要shell自己去执行
-
+    if(strcmp(argv[0],"ls")==0)
+    {
+      argv[i]="--color=auto";
+      i++;
+    }
     CommandAnalys(argv, i);
     
     free(command);
