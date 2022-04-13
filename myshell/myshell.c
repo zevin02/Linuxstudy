@@ -22,16 +22,11 @@ void CommandAnalys(char *argv[], int size)
     else
     {
         int flag = 0;
-        // if(strcmp(argv,"exit")==0)
-        // {
-        //     //DoProcExit();
-        //     return ;
-        // }
         for (int i = 0; i < size; i++)
         {
             if (strcmp(argv[i], ">") == 0)
             {
-                if(strcmp(argv[0],"ls")==0)
+                if (strcmp(argv[0], "ls") == 0)
                 {
                     size--;
                 }
@@ -41,7 +36,7 @@ void CommandAnalys(char *argv[], int size)
             }
             if (strcmp(argv[i], ">>") == 0)
             {
-                if(strcmp(argv[0],"ls")==0)
+                if (strcmp(argv[0], "ls") == 0)
                 {
                     size--;
                 }
@@ -51,7 +46,7 @@ void CommandAnalys(char *argv[], int size)
             }
             if (strcmp(argv[i], "<") == 0)
             {
-                if(strcmp(argv[0],"ls")==0)
+                if (strcmp(argv[0], "ls") == 0)
                 {
                     size--;
                 }
@@ -59,7 +54,6 @@ void CommandAnalys(char *argv[], int size)
                 flag = 1;
                 break;
             }
-            
         }
 
         if (flag)
@@ -71,11 +65,7 @@ void CommandAnalys(char *argv[], int size)
             pid_t id = fork();
             if (id == 0) //这里我们touch东西，cd的话都是子进程，但是我们需要让父进程去进行这些操作
             {
-                // fork执行的是第三方命令，独立的命令
-                //  if(argv[0]=="|")
-                //  {
-                //    Do_pipe(argv);
-                //  }
+                
                 execvp(argv[0], argv);
                 exit(1);
             }
