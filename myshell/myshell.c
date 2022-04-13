@@ -13,6 +13,10 @@ void CommandAnalys(char *argv[], int size)
     {
         DoProcExit(); //进程退出
     }
+    else if (size != 0 && strcmp(argv[0], "history") == 0)
+    {
+        ShowHistory();
+    }
     // 5.执行第3方命令
     //子进程来执行的命令
     else
@@ -67,6 +71,21 @@ void CommandAnalys(char *argv[], int size)
     }
 }
 
+void ShowHistory()
+{
+    int i = 3;
+    HIST_ENTRY **his;
+    his = history_list();
+    printf(" 1 1\n");
+    printf(" 2 2\n");
+    while (his[i] != NULL)
+    {
+        printf(" %d %s\n", i, his[i]->line);
+        i++;
+    }
+}
+
+//进程退出
 void DoProcExit()
 {
     exit(0);
