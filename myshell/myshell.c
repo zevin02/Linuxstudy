@@ -54,6 +54,12 @@ void CommandAnalys(char *argv[], int size)
                 flag = 1;
                 break;
             }
+            if(strcmp(argv[i],"|")==0)
+            {
+                DoPipe(argv,size);
+                flag=1;
+                break;
+            }
         }
         if(strcmp(argv[size-1],"&")==0)
         {
@@ -222,4 +228,71 @@ int IsFarDo(char *filename)
     if (strcmp(filename, "cd") == 0 || strcmp(filename, ">") == 0 || strcmp(filename, ">>") == 0 || strcmp(filename, "<") == 0)
         return 1;
     return 0;
+}
+
+
+void DoPipe(char*argv[],int size)//
+{
+ 
+    char*str1[100]={NULL};
+    char*str2[100]={NULL};
+    int i=0;
+    int flag=0;
+    int p=0;
+    while(argv[i]!=NULL)
+    {
+      if(strcmp(argv[i],"|")==0)
+      {
+        i++;
+        flag=1;
+        str1[p]="--color=auto";
+        p=0;
+      }
+      else if(flag==0)
+      {
+        str1[p++]=argv[i++];
+      }
+      else if(flag==1)
+      {
+        str2[p++]=argv[i++];
+      }
+    }
+     //str2[p]="--color=auto";
+
+    pid_t pid=fork();
+    if(pid<0)
+    {
+      perror("fork");
+      exit;
+    }
+    else if(pid==0)//子进程
+    {
+      int ret;
+      int fd[2];//存放文件句柄pipe
+      ret=pipe(fd);//建立管道
+
+      pid_t pid1=fork();
+      if(pid<0)
+      {
+        perror("fork");
+        exit;
+      }
+      else if(pid1>0)//子进程
+      {
+        close(fd[0]);//关闭读端
+        dup2(fd[1],1);
+        execvp(str1[0],str1);     
+      }
+      else if(pid1==0)
+      {
+        int fdin=dup(0);//保存标准输入
+        close(fd[1]);//关闭写端
+        dup2(fd[0],0);
+        execvp(str2[0],str2); 
+      }
+    }
+    else if(pid>0)
+    {
+      wait(NULL);
+    }
 }

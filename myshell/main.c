@@ -23,6 +23,7 @@ int main()
     {
       continue;
     }
+    add_history(buf);
     add_history(command);
     write_history(NULL);
 
@@ -63,7 +64,7 @@ int main()
       }
     }
     CommandAnalys(argv, i);
-
+    
     free(command);
   }
   write_history(NULL);
