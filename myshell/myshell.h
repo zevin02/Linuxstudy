@@ -37,5 +37,7 @@ void DoInputRedef(char *argv[], int size, int leftpos, char *command); //输入�
 void DoProcExit();
 void ShowHistory();
 void DoBackRun(char* argv[],int size);
-void DoPipe(char*argv[],int size);//实现管道
+void DoPipe(char*argv[],int size,int pipepos);//实现管道
 
+// char* cdpath[30];
+// int cdpos=0;

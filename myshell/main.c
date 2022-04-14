@@ -7,13 +7,15 @@ int main()
   //一定是一个死循环程序
   my_signal();
   read_history(NULL);
+  char *cdpath[30];
+  int cdpos = 0;
   for (;;)
   {
     // read_history(NULL);
     char *argv[CMD_NUM] = {NULL};
     //  1.打印提示符号
     // command[0] = 0; //用这样的方式，可以做到以O(1)的时间复杂度，清空字符串，因为c语言以\0结尾
-    
+
     char buf[100];
     getcwd(buf, sizeof(buf)); //打印路径
 
@@ -23,7 +25,7 @@ int main()
     {
       continue;
     }
-    add_history(buf);
+    // add_history(buf);
     add_history(command);
     write_history(NULL);
 
@@ -58,13 +60,12 @@ int main()
     {
       argv[i] = "--color=auto";
       i++;
-      if(i>1&&strcmp(argv[1],"~")==0)
+      if (i > 1 && strcmp(argv[1], "~") == 0)
       {
-        argv[1]="/home/xvzewen";
+        argv[1] = "/home/xvzewen";
       }
     }
     CommandAnalys(argv, i);
-    
     free(command);
   }
   write_history(NULL);
