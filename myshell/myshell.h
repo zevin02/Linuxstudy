@@ -36,3 +36,5 @@ void DoRedefDir(char *argv[], int size, int rightpos, char *command);  //实现�
 void DoInputRedef(char *argv[], int size, int leftpos, char *command); //输入重定向
 void DoProcExit();
 void ShowHistory();
+void DoBackRun(char* argv[],int size);
+

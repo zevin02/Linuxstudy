@@ -13,12 +13,12 @@ int main()
     char *argv[CMD_NUM] = {NULL};
     //  1.打印提示符号
     // command[0] = 0; //用这样的方式，可以做到以O(1)的时间复杂度，清空字符串，因为c语言以\0结尾
-    // printf("[xzw-super-shell]# ");
+    
     char buf[100];
     getcwd(buf, sizeof(buf)); //打印路径
 
-    printf("xzw super shell %s  ", buf);
-    char *command = readline(BEGIN(49, 34) " $ " CLOSE);
+    printf(" %s with ", buf);
+    char *command = readline(BEGIN(49, 34) " xzw super shell $ " CLOSE);
     if (command == NULL) //屏蔽ctrl d
     {
       continue;
@@ -57,6 +57,10 @@ int main()
     {
       argv[i] = "--color=auto";
       i++;
+      if(i>1&&strcmp(argv[1],"~")==0)
+      {
+        argv[1]="/home/xvzewen";
+      }
     }
     CommandAnalys(argv, i);
 

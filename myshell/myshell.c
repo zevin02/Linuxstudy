@@ -55,6 +55,14 @@ void CommandAnalys(char *argv[], int size)
                 break;
             }
         }
+        if(strcmp(argv[size-1],"&")==0)
+        {
+            //ls -a -l & -auto 
+            argv[size-1]='\0';
+            size--;
+            DoBackRun(argv,size);
+            return;
+        }
 
         if (flag)
         {
@@ -74,6 +82,31 @@ void CommandAnalys(char *argv[], int size)
     }
 }
 
+
+
+void DoBackRun(char* argv[],int size)
+{
+    //执行后台命令
+    pid_t id=fork();
+    if(id<0)
+    {
+        perror("fork");
+    }
+    if(id==0)
+    {
+        //child
+        freopen("/dev/null", "w", stdout); 
+        freopen("/dev/null", "r", stdin);
+        signal(SIGCHLD, SIG_IGN);
+        CommandAnalys(argv,size);
+        execvp(argv[0], argv);
+        perror("execvp");
+    }
+    else
+    {
+        exit(0);
+    }
+}
 void ShowHistory()
 {
     int i = 3;
