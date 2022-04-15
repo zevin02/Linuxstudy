@@ -38,6 +38,8 @@ void DoProcExit();
 void ShowHistory();
 void DoBackRun(char* argv[],int size);
 void DoPipe(char*argv[],int size,int pipepos);//实现管道
+int callCommandWithPipe(char *argv[], int left, int right);
 
 // char* cdpath[30];
 // int cdpos=0;
+int callCommandWithRedi(char *argv[], int left, int right);
