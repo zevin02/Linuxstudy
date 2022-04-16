@@ -4,6 +4,7 @@
 
 int main()
 {
+  mkfifo("abcdef",0664);
   //一定是一个死循环程序
   my_signal();
   read_history(NULL);
@@ -65,7 +66,7 @@ int main()
         argv[1] = "/home/xvzewen";
       }
     }
-    CommandAnalys(argv, i);
+    CommandAnalys(argv, i/*,command*/);
     free(command);
   }
   write_history(NULL);

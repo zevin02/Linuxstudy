@@ -1,7 +1,7 @@
 #include "myshell.h"
 extern char *cdpath[30];
 extern int cdpos;
-void CommandAnalys(char *argv[], int size)
+void CommandAnalys(char *argv[], int size/*,char* buf*/)
 // argv{"touch ","a","NULL"}
 {
 
@@ -34,7 +34,9 @@ void CommandAnalys(char *argv[], int size)
 
                 // int ret=callCommandWithPipe(argv, 0, size);
 
-                DoPipe(argv, size, i);
+               ; //DoPipe(argv, size);
+                // command_with_Pipe(buf);
+                DoCommandPipe(argv,size);
                 flag = 1;
                 break;
                 // exit(ret);
@@ -251,86 +253,484 @@ void my_signal()
     signal(SIGHUP, SIG_IGN);
 }
 
-void DoPipe(char *argv[], int size, int pipepos) //实现管道
+
+
+
+void DoCommandPipe(char* argv[],int size)//处理管道
 {
-    int piped[10];
-    int n = 0;
-    for (int i = 0; i < size; i++)
+    //获得每个管道的位置
+    int pipepos[5];
+    int pipe_num=0;//计算管道的数量
+    for(int i=0;i<size;i++)
     {
-        if (strcmp(argv[i], "|") == 0)
+        if(strcmp(argv[i],"|")==0)
         {
-            piped[n++] = i;
+            pipepos[pipe_num++]=i;
         }
     }
-    for (int k = 0; k < n; k++)
+    int cmd_num=pipe_num+1;
+
+    //获得管道之间的命令
+    char* cmd[cmd_num][7];
+
+    for(int i=0;i<cmd_num;i++)//获得那些命令
     {
-        char *wstream[piped[k] + 1]; //存管道前面的内容
-        char **rstream = NULL;
-        if (k + 1 < n)
+        if(i==0)//第一个命令
         {
-            rstream = (char **)malloc(sizeof(char *) * (piped[k + 1] - piped[k]));
-        }
-        else
-        {
-            rstream = (char **)malloc(sizeof(char *) * (size - piped[k]));
-        }
-        int wpos = 0;
-        int rpos = 0;
-        int left = 0;
-        if (k > 0)
-            left = piped[k] + 1;
-        int right;
-        if (k + 1 < n)
-            right = piped[k + 1];
-        else
-            right = size;
-        for (int i = left; i < right; i++)
-        {
-            if (i < piped[k])
-                wstream[wpos++] = argv[i];
-            else if (i > piped[k])
-                rstream[rpos++] = argv[i];
-        }
-        wstream[piped[k]] = NULL;
-        if (k + 1 < n)
-            rstream[piped[k + 1] - piped[k] - 1] = NULL;
-        else
-            rstream[size - piped[k] - 1] = NULL;
-        pid_t id = fork();
-
-        if (id == 0)
-        {
-            int fd[2];
-            int ret = pipe(fd);
-            pid_t id1 = fork();
-            if (id1 > 0)
+            int n=0;
+            for(int j=0;j<pipepos[0];j++)
             {
-                //父进程执行写端
-                close(fd[0]); //关闭读段
-                dup2(fd[1], 1);
-                // close(fd[1]);
-
-                int ret = execvp(wstream[0], wstream);
-                if (ret == -1)
+                cmd[i][n++]=argv[j];
+            }
+            cmd[i][n]=NULL;
+        }
+        else if(i==pipe_num)//最后一个命令
+        {
+            int n=0;
+            for(int j=pipepos[i-1]+1;j<size;j++)
+            {
+                cmd[i][n++]=argv[j];
+            }
+            cmd[i][n]=NULL;
+        }
+        else
+        {
+            //中间命令
+            int n=0;
+            for(int j=pipepos[i-1]+1;j<pipepos[i];j++)
+            {
+                cmd[i][n++]=argv[j];
+            }
+            cmd[i][n]=NULL;
+        }
+    } 
+    //创建子进程来执行这些操作
+    int fd[pipe_num][2];
+    int i=0;
+    pid_t pid;
+    for(i=0;i<pipe_num;i++)
+    {
+        pipe(fd[i]);//创建管道
+    }
+    for(i=0;i<cmd_num;i++)
+    {
+        if((pid=fork())==0)
+        {
+            break;
+        }
+    }
+    if(pid==0)
+    {
+        //child
+        if(pipe_num)
+        {
+            if(i==0)
+            {
+                //第一个进程
+                dup2(fd[0][1],1);
+                close(fd[0][0]);
+                //其他都关掉
+                for(int j=1;j<pipe_num;j++)
                 {
-                    printf("fail\n");
+                    close(fd[j][0]);
+                    close(fd[j][1]);
                 }
-                sleep(1);
-                waitpid(id, NULL, 0);
             }
-            else if (id1 == 0)
+            else if(i==pipe_num)//执行最后一个命令
             {
-                close(fd[1]);
-                dup2(fd[0], 0);
-                // close(fd[0]);
-                execvp(rstream[0], rstream);
-                // exit(0);
+                dup2(fd[i-1][0],0);
+                close(fd[i-1][1]);
+                //其他全关掉
+                for(int j=0;j<pipe_num-1;j++)
+                {
+                    close(fd[j][0]);
+                    close(fd[j][1]);
+                }
+
+            }
+            else
+            {
+                //中间命令
+                //执行前面的读端，和后面的写端
+                dup2(fd[i-1][0],0);
+                close(fd[i-1][1]);
+                dup2(fd[i][1],1);
+                close(fd[i][0]);
+                //其他全关闭
+                for(int j=0;j<pipe_num;j++)
+                {
+                    if(j!=i||j!=(i-1))
+                    {
+                        close(fd[j][0]);
+                        close(fd[j][1]);
+                    }
+                }
             }
         }
-        sleep(1);
-        waitpid(id, NULL, 0);
+        execvp(cmd[i][0],cmd[i]);
     }
+    //父进程
+    for(i=0;i<pipe_num;i++)
+    {
+        close(fd[i][0]);
+        close(fd[i][1]);//父进程端口全部关掉
+
+    }
+    for(i=0;i<cmd_num;i++)
+    {
+        wait(NULL);
+    }
+
+
 }
+
+
+// void DoPipe(char *argv[], int size, int pipepos) //实现管道
+// {
+//     int piped[10];
+//     int n = 0;
+//     for (int i = 0; i < size; i++)
+//     {
+//         if (strcmp(argv[i], "|") == 0)
+//         {
+//             piped[n++] = i;
+//         }
+//     }
+//     for (int k = 0; k < n; k++)
+//     {
+//         char *wstream[piped[k] + 1]; //存管道前面的内容
+//         char **rstream = NULL;
+//         if (k + 1 < n)
+//         {
+//             rstream = (char **)malloc(sizeof(char *) * (piped[k + 1] - piped[k]));
+//         }
+//         else
+//         {
+//             rstream = (char **)malloc(sizeof(char *) * (size - piped[k]));
+//         }
+//         int wpos = 0;
+//         int rpos = 0;
+//         int left = 0;
+//         if (k > 0)
+//             left = piped[k] + 1;
+//         int right;
+//         if (k + 1 < n)
+//             right = piped[k + 1];
+//         else
+//             right = size;
+//         for (int i = left; i < right; i++)
+//         {
+//             if (i < piped[k])
+//                 wstream[wpos++] = argv[i];
+//             else if (i > piped[k])
+//                 rstream[rpos++] = argv[i];
+//         }
+//         wstream[piped[k]] = NULL;
+//         if (k + 1 < n)
+//             rstream[piped[k + 1] - piped[k] - 1] = NULL;
+//         else
+//             rstream[size - piped[k] - 1] = NULL;
+//         pid_t id = fork();
+
+//         if (id == 0)
+//         {
+//             int fd[2];
+//             int ret = pipe(fd);
+//             pid_t id1 = fork();
+//             if (id1 > 0)
+//             {
+//                 //父进程执行写端
+//                 close(fd[0]); //关闭读段
+//                 dup2(fd[1], 1);
+//                 // close(fd[1]);
+
+//                 int ret = execvp(wstream[0], wstream);
+//                 if (ret == -1)
+//                 {
+//                     printf("fail\n");
+//                 }
+//                 sleep(1);
+//                 waitpid(id, NULL, 0);
+//             }
+//             else if (id1 == 0)
+//             {
+//                 close(fd[1]);
+//                 int save=dup(0);
+//                 dup2(fd[0], 0);
+//                 // close(fd[0]);
+//                 execvp(rstream[0], rstream);
+//                 // exit(0);
+//                 dup2(save,0);
+//             }
+//         }
+//         sleep(1);
+//         waitpid(id, NULL, 0);
+//     }
+// }
+
+// void DoPipe(char *argv[], int size)
+// {
+//     int piped[10];
+//     int flag = 1;
+//     int n = 0;
+//     for (int i = 0; i < size; i++)
+//     {
+//         if (strcmp(argv[i], "|") == 0)
+//         {
+//             piped[n++] = i;
+//         }
+//     }
+//     pid_t id = fork();
+//     int fd[2];
+//     int fd1[2];
+//     if (id == 0)
+//     {
+//         for (int i = 0; i <= n; i++)
+//         {
+
+//             if (flag)
+//             {
+//                 pipe(fd);
+//                 close(fd[0]);
+//                 dup2(fd[1], 1);
+//                 pid_t id1 = fork();
+//                 if (id1 > 0)
+//                 {
+//                     // runexecv
+//                     char *command[5];
+//                     int k = 0;
+//                     for (k = 0; k < piped[i]; k++)
+//                     {
+//                         command[k] = argv[k];
+//                     }
+//                     command[k] = NULL;
+//                     execvp(command[0], command);
+//                     waitpid(id1, NULL, 0);
+//                 }
+//                 flag = ~flag;
+//             }
+//             else if (i < n)
+//             {
+//                 close(fd[1]);
+//                 dup2(fd[0], 0);
+
+//                 pipe(fd1);
+//                 dup2(fd1[1], 1);
+//                 close(fd1[0]);
+//                 pid_t id2 = fork();
+//                 if (id2 > 0)
+//                 {
+//                     // run
+//                     char *command[5];
+//                     int pos = 0;
+//                     for (int k = piped[i - 1] + 1; k < piped[i]; k++)
+//                     {
+//                         command[pos++] = argv[k];
+//                     }
+//                     command[pos] = NULL;
+//                     execvp(command[0], command);
+//                     waitpid(id2, NULL, 0);
+//                 }
+//             }
+//             else if (i == n)
+//             {
+//                 close(fd[0]);
+//                 dup2(fd[1], 1);
+//                 // run code without pipe
+//                 char *command[5];
+//                 int pos = 0;
+//                 for (int k = piped[i - 1]; k < size; k++)
+//                 {
+//                     command[pos++] = argv[k];
+//                 }
+//                 command[pos] = NULL;
+//                 execvp(command[0], command);
+//                 waitpid(id ,NULL, 0);
+//             }
+//             // exchange pipe
+//             fd[0] = fd1[0];
+//             fd[1] = fd1[1];
+//         }
+//         // else if (i == n)
+//         // {
+//         //     close(fd[0]);
+//         //     dup2(fd[1], 1);
+//         //     // run code without pipe
+//         //     int pos = 0;
+//         //     for (int k = piped[i - 1]; k < size; k++)
+//         //     {
+//         //         command[pos++] = argv[k];
+//         //     }
+//         //     command[pos] = NULL;
+//         //     execvp(command[0], command);
+//         //     waitpid(id1, NULL, 0);
+//         // }
+
+//         // pipe(fd);
+//         // if(flag)
+//         // {
+//         //     close(fd[0]);
+//         //     dup2(fd[1],1);
+//         //     flag=~flag;
+//         // }
+//         // else
+//         // {
+//         //     close(fd[1]);
+//         //     dup2(fd[0],0);
+//         //     flag=~flag;
+//         // }
+//         // pid_t id1=fork();
+//         // if(id1==0)
+//         // {
+//         // }
+//         // else
+//         // {
+//         //     //father
+//         //     char* command[5];
+//         //     //得到命令
+//         // if (i == 0)
+//         // {
+//         //     int k = 0;
+//         //     for (k = 0; k < piped[i]; k++)
+//         //     {
+//         //         command[k] = argv[k];
+//         //     }
+//         //     command[k] = NULL;
+//         //     execvp(command[0], command);
+//         //     waitpid(id1, NULL, 0);
+//         // }
+//         // //     else if(i==n)
+//         // //     {
+//         // //         //最后一次
+//         // int pos = 0;
+//         // for (int k = piped[i - 1]; k < size; k++)
+//         // {
+//         //     command[pos++] = argv[k];
+//         // }
+//         // command[pos] = NULL;
+//         // execvp(command[0], command);
+//         // waitpid(id1, NULL, 0);
+//         // //     }
+//         // else
+//         // {
+//         //     int pos = 0;
+//         //     for (int k = piped[i - 1] + 1; k < piped[i]; k++)
+//         //     {
+//         //         command[pos++] = argv[k];
+//         //     }
+//         //     command[pos] = NULL;
+//         //     execvp(command[0], command);
+//         //     waitpid(id1, NULL, 0);
+//         // }
+
+//         // }
+//     }
+
+// else if (id > 0)
+// {
+//     waitpid(id, NULL, 0);
+// }
+// else
+// {
+//     perror("fork");
+// }
+// }
+
+//mustuse
+
+// int command_with_Pipe(char *buf)
+// {
+//     int i, j;
+//     int cmd_num = 0, pipe_num = 0;
+//     int fd[16][2];
+//     char *curcmd;
+//     char *nextcmd = buf;
+//     for (int k = 0; buf[k]; k++){
+//         if(buf[k] == '|'){
+//             pipe_num++;
+//         }
+//     }
+//     while ((curcmd = strsep(&nextcmd, "|"))){
+//         if(parse_pipe(curcmd, cmd_num++) < 0){
+//             cmd_num--;
+//             break;
+//         }
+//         if(cmd_num == 17)//16根管道最多支持17条命令
+//             break;
+//     }
+
+//     for (i = 0; i < pipe_num; i++){//创建管道
+//         if(pipe(fd[i])){
+//             my_error("pipe", __LINE__);
+//         }
+//     }
+
+//     pid_t pid;
+//     for (i = 0; i <= pipe_num; i++){ //管道数目决定创建子进程个数
+//         if((pid = fork()) == 0)
+//             break;
+//     }
+
+//     if(pid == 0){
+//         if(pipe_num != 0){
+        
+//             if (i == 0){ //第一个创建的子进程
+//             //管道的输入为标准输入
+//                 dup2(fd[0][1], STDOUT_FILENO);
+//                 close(fd[0][0]);
+
+//                 for (j = 1; j < pipe_num; j++){
+//                     close(fd[j][0]);
+//                     close(fd[j][1]);
+//                 }
+//             }else if (i == pipe_num){ //最后一个创建的子进程
+//             //管道的输出为标准输出
+//                 dup2(fd[i-1][0], STDIN_FILENO);
+//                 close(fd[i-1][1]);
+
+//                 for (j = 0; j < pipe_num - 1; j++){
+//                     close(fd[j][0]);
+//                     close(fd[j][1]);
+//                 }
+//             }else{
+//                 //重定中间进程的标准输入至管道读端
+//                 dup2(fd[i-1][0], STDIN_FILENO); 
+//                 close(fd[i-1][1]);
+//                 //重定中间进程的标准输出至管道写端
+//                 dup2(fd[i][1], STDOUT_FILENO);
+//                 close(fd[i][0]);
+
+//                 for (j = 0; j < pipe_num; j++){ //关闭不使用的管道读写两端
+//                     if (j != i || j != i - 1){
+//                         close(fd[j][0]);
+//                         close(fd[j][1]);
+//                     }
+//                 }
+//             }
+//         }
+//         pipe_num = 0;
+//         execvp(cmd[i].argv[0], cmd[i].argv); //执行用户输入的命令
+//         my_error("execvp",__LINE__);
+//         exit(1);
+//     }else{// parent
+//     //关闭父进程所有管道
+//     for (i = 0; i < pipe_num; i++){
+//             close(fd[i][0]);
+//             close(fd[i][1]);
+//         }
+        
+//         for (i = 0; i <= cmd_num; i++){
+//             int wpid = wait(NULL);
+//             // if(wpid == -1)
+//             // {
+//             //     my_error("wait error",__LINE__);
+//             // }
+//         }
+//     }
+// }
+
+
+
 
 // void callCommandWithPipe(char *argv[], int left, int right)
 // { // 所要执行的指令区间[left, right)，可能含有管道
@@ -480,91 +880,6 @@ void DoPipe(char *argv[], int size, int pipepos) //实现管道
 //         dup2(fds[0], STDIN_FILENO); // 将标准输入重定向到fds[0]
 //         close(fds[0]);
 //         result=callCommandWithPipe(argv, pipeIdx + 1, right); // 递归执行后续指令
-//     }
-//     return result;
-// }
-
-// int callCommandWithRedi(char *argv[], int left, int right)
-// { // 所要执行的指令区间[left, right)，不含管道，可能含有重定向
-
-//     /* 判断是否有重定向 */
-//     int inNum = 0, outNum = 0;
-//     char *inFile = NULL, *outFile = NULL;
-//     int endIdx = right; // 指令在重定向前的终止下标
-
-//     for (int i = left; i < right; ++i)
-//     {
-//         if (strcmp(argv[i], "<") == 0)
-//         { // 输入重定向
-//             ++inNum;
-//             if (i + 1 < right)
-//                 inFile = argv[i + 1];
-//             else
-//                 return 1; // 重定向符号后缺少文件名
-
-//             if (endIdx == right)
-//                 endIdx = i;
-//         }
-//         else if (strcmp(argv[i], "<") == 0)
-//         { // 输出重定向
-//             ++outNum;
-//             if (i + 1 < right)
-//                 outFile = argv[i + 1];
-//             else
-//                 return 2; // 重定向符号后缺少文件名
-
-//             if (endIdx == right)
-//                 endIdx = i;
-//         }
-//     }
-//     /* 处理重定向 */
-//     if (inNum == 1)
-//     {
-//         FILE *fp = fopen(inFile, "r");
-//         if (fp == NULL) // 输入重定向文件不存在
-//             return 2;
-
-//         fclose(fp);
-//     }
-
-//     if (inNum > 1)
-//     { // 输入重定向符超过一个
-//         return 1;
-//     }
-//     else if (outNum > 1)
-//     { // 输出重定向符超过一个
-//         return 1;
-//     }
-//     int result=0;
-//     pid_t pid = fork();
-//     if(pid<0)
-//     result=-1;
-//     if (pid == 0)
-//     {
-//         /* 输入输出重定向 */
-//         if (inNum == 1)
-//             freopen(inFile, "r", stdin);
-//         if (outNum == 1)
-//             freopen(outFile, "w", stdout);
-
-//         /* 执行命令 */
-//         char *comm[endIdx - left + 1];
-//         int pos = 0;
-//         for (int i = left; i < endIdx; ++i)
-//             comm[pos++] = argv[i];
-//         comm[pos] = NULL;
-//         execvp(comm[0], comm);
-//         // 执行出错，返回errno
-//     }
-//     else
-//     {
-//         int status;
-//         waitpid(pid, &status, 0);
-//         int err = WEXITSTATUS(status); // 读取子进程的返回码
-//         if (err)
-//         { // 返回码不为0，意味着子进程执行出错，用红色字体打印出错信息
-//             printf("\e[31;1mError: %s\n\e[0m", strerror(err));
-//         }
 //     }
 //     return result;
 // }

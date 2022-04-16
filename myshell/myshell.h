@@ -8,6 +8,7 @@
 #include <readline/readline.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include<sys/stat.h>
 #include <signal.h>
 
 
@@ -25,7 +26,7 @@ extern int write_history PARAMS((const char *));
 extern HIST_ENTRY **history_list PARAMS((void));//用来执行history命令的声明
 
 
-void CommandAnalys(char *argv[], int size);
+void CommandAnalys(char *argv[], int size/*,char* command*/);
 int IsFarDo(char *filename);                     //判断是否需要父进程去执行
 void DoFarProcess(char *filename, char *argv[]); //需要父进程去实现的命令
 void Do_cd(char *filename, char *argv[]);        //执行cd命令
@@ -37,9 +38,18 @@ void DoInputRedef(char *argv[], int size, int leftpos, char *command); //输入�
 void DoProcExit();
 void ShowHistory();
 void DoBackRun(char* argv[],int size);
-void DoPipe(char*argv[],int size,int pipepos);//实现管道
+// void DoPipe(char*argv[],int size,int pipepos);//实现管道
+// void DoPipe(char* argv[],int size);
+void DoCommandPipe(char* argv[],int size);//处理管道
+
 int callCommandWithPipe(char *argv[], int left, int right);
 
 // char* cdpath[30];
 // int cdpos=0;
 int callCommandWithRedi(char *argv[], int left, int right);
+// int command_with_Pipe(char *command)
+
+// struct 
+// {
+//     char *argv[20];
+// }cmd[16];
