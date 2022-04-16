@@ -27,6 +27,8 @@ int main()
       continue;
     }
     // add_history(buf);
+
+
     add_history(command);
     write_history(NULL);
 

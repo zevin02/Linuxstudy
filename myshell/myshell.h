@@ -42,14 +42,4 @@ void DoBackRun(char* argv[],int size);
 // void DoPipe(char* argv[],int size);
 void DoCommandPipe(char* argv[],int size);//处理管道
 
-int callCommandWithPipe(char *argv[], int left, int right);
 
-// char* cdpath[30];
-// int cdpos=0;
-int callCommandWithRedi(char *argv[], int left, int right);
-// int command_with_Pipe(char *command)
-
-// struct 
-// {
-//     char *argv[20];
-// }cmd[16];

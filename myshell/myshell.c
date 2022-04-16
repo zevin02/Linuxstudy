@@ -273,7 +273,7 @@ void DoCommandPipe(char* argv[],int size)//处理管道
     //获得管道之间的命令
     char* cmd[cmd_num][7];
 
-    for(int i=0;i<cmd_num;i++)//获得那些命令
+    for(int i=0;i<cmd_num;i++)//获得那些命令,
     {
         if(i==0)//第一个命令
         {
@@ -305,16 +305,16 @@ void DoCommandPipe(char* argv[],int size)//处理管道
         }
     } 
     //创建子进程来执行这些操作
-    int fd[pipe_num][2];
+    int fd[pipe_num][2];//用来操作每一根管道
     int i=0;
-    pid_t pid;
+    pid_t pid;//对进程进行操作
     for(i=0;i<pipe_num;i++)
     {
-        pipe(fd[i]);//创建管道
+        pipe(fd[i]);//创建管道，对应的是每个i的管道
     }
     for(i=0;i<cmd_num;i++)
     {
-        if((pid=fork())==0)
+        if((pid=fork())==0)//对应i的进程
         {
             break;
         }
@@ -326,10 +326,10 @@ void DoCommandPipe(char* argv[],int size)//处理管道
         {
             if(i==0)
             {
-                //第一个进程
+                //第一个进程，把读端关掉，写端绑定
                 dup2(fd[0][1],1);
                 close(fd[0][0]);
-                //其他都关掉
+                //其他管道读写端都关掉
                 for(int j=1;j<pipe_num;j++)
                 {
                     close(fd[j][0]);
@@ -338,9 +338,10 @@ void DoCommandPipe(char* argv[],int size)//处理管道
             }
             else if(i==pipe_num)//执行最后一个命令
             {
+                //把写端关掉，读端打开
                 dup2(fd[i-1][0],0);
                 close(fd[i-1][1]);
-                //其他全关掉
+                //其他的管道全关掉
                 for(int j=0;j<pipe_num-1;j++)
                 {
                     close(fd[j][0]);
@@ -351,13 +352,14 @@ void DoCommandPipe(char* argv[],int size)//处理管道
             else
             {
                 //中间命令
-                //执行前面的读端，和后面的写端
+                //把该命令管道前面的读端绑定，写端关闭
                 dup2(fd[i-1][0],0);
                 close(fd[i-1][1]);
+                //把该命令后面的管道的写端绑定，读端关闭
                 dup2(fd[i][1],1);
                 close(fd[i][0]);
                 //其他全关闭
-                for(int j=0;j<pipe_num;j++)
+                for(int j=0;j<pipe_num;j++)//除了我们操作的这两个管道以外的管道的读写端都关掉
                 {
                     if(j!=i||j!=(i-1))
                     {
@@ -367,15 +369,16 @@ void DoCommandPipe(char* argv[],int size)//处理管道
                 }
             }
         }
-        execvp(cmd[i][0],cmd[i]);
+        execvp(cmd[i][0],cmd[i]);//执行命令
     }
-    //父进程
+    //父进程什么都不干，把管道的所有口都关掉
     for(i=0;i<pipe_num;i++)
     {
         close(fd[i][0]);
         close(fd[i][1]);//父进程端口全部关掉
 
     }
+    //每次子进程执行完之后都要让父进程等待
     for(i=0;i<cmd_num;i++)
     {
         wait(NULL);
