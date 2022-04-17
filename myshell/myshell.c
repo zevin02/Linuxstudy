@@ -124,7 +124,6 @@ void CommandAnalys(char *argv[], int size, char *command)
     }
 }
 
-
 void ShowHistory()
 {
     int i = 3;
@@ -163,7 +162,6 @@ void DoInputRedef(char *argv[], int size, int leftpos, char *command)
     {
         char line[128];
 
-        
         execvp(argv[0], tmp);
     }
     waitpid(-1, NULL, 0);
@@ -252,8 +250,17 @@ void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
     //获得每个管道的位置
     int pipepos[5];
     int pipe_num = 0; //计算管道的数量
+    int in = 0, out = 0;
     for (int i = 0; i < size; i++)
     {
+        if (strcmp(argv[i], ">") == 0)
+        {
+            out=1;
+        }
+        if (strcmp(argv[i], "<") == 0)
+        {
+            in=1;
+        }
         if (strcmp(argv[i], "|") == 0)
         {
             pipepos[pipe_num++] = i;
@@ -366,6 +373,16 @@ void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
             perror("execvp");
             exit(-1);
         }
+    }
+    if(in)
+    {
+        int fd=open(argv[size-1],O_RDONLY);
+        dup2(fd,0);
+    }
+    if(out)
+    {
+        int fd=open(argv[size-1],O_WRONLY|O_TRUNC|O_CREAT,0666);
+        dup2(fd,1);
     }
     //父进程什么都不干，把管道的所有口都关掉
     for (i = 0; i < pipe_num; i++)
