@@ -163,10 +163,7 @@ void DoInputRedef(char *argv[], int size, int leftpos, char *command)
     {
         char line[128];
 
-        // while (fgets(line, sizeof(line) - 1, stdin))
-        // {
-        //     printf("%s\n", line);
-        // }
+        
         execvp(argv[0], tmp);
     }
     waitpid(-1, NULL, 0);
