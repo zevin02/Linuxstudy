@@ -1,3 +1,6 @@
+#ifndef _SH_H_
+#define _SH_H_
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -42,4 +45,9 @@ void DoBackRun(char* argv[],int size);
 // void DoPipe(char* argv[],int size);
 void DoCommandPipe(char* argv[],int size);//处理管道
 
+extern char* prevpwd;
+extern char* curpwd;
+extern char buf[100];
+
+#endif
 

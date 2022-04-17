@@ -1,7 +1,8 @@
 #include "myshell.h"
-extern char *cdpath[30];
-extern int cdpos;
-void CommandAnalys(char *argv[], int size/*,char* buf*/)
+char* prevpwd=NULL;
+char* curpwd;
+char buf[100];
+void CommandAnalys(char *argv[], int size /*,char* buf*/)
 // argv{"touch ","a","NULL"}
 {
 
@@ -34,9 +35,9 @@ void CommandAnalys(char *argv[], int size/*,char* buf*/)
 
                 // int ret=callCommandWithPipe(argv, 0, size);
 
-               ; //DoPipe(argv, size);
+                ; // DoPipe(argv, size);
                 // command_with_Pipe(buf);
-                DoCommandPipe(argv,size);
+                DoCommandPipe(argv, size);
                 flag = 1;
                 break;
                 // exit(ret);
@@ -93,7 +94,12 @@ void CommandAnalys(char *argv[], int size/*,char* buf*/)
             if (id == 0) //这里我们touch东西，cd的话都是子进程，但是我们需要让父进程去进行这些操作
             {
 
-                execvp(argv[0], argv);
+                int ret = execvp(argv[0], argv);
+                if (ret == -1)
+                {
+                    perror("execvp");
+                    exit(-1);
+                }
                 exit(1);
             }
             waitpid(id, NULL, 0);
@@ -204,7 +210,12 @@ void DoRedefDir(char *argv[], int size, int youpos, char *command)
     tmp[youpos] = NULL;
     if (fork() == 0)
     {
-        execvp(argv[0], tmp);
+        int ret = execvp(argv[0], tmp);
+        if (ret == -1)
+        {
+            perror("execvp");
+            exit(-1);
+        }
     }
 
     waitpid(-1, NULL, 0);
@@ -214,37 +225,36 @@ void DoRedefDir(char *argv[], int size, int youpos, char *command)
 
 void Do_cd(char *filename, char *argv[])
 {
-
+  
+    char* tmp=NULL;
+    if(prevpwd==NULL)
+    prevpwd=buf;
     if (argv[1])
     {
         if (strcmp(argv[1], "~") == 0)
         {
-            chdir("/home/xvzewen");
-            // cdpath[cdpos++]="/home/xvzewen";
+            tmp="/home/xvzewen";
+            // strcmp(argv[1],"/home/xvzewen");
+            // chdir("/home/xvzewen");
         }
-        // else if(strcmp(argv[1],"-")==0)////回到上一次的路径
-        // {
-        //     if(cdpos==0)
-        //     {
-        //       chdir(".");
-        //       cdpath[cdpos++]=".";
-        //     }
-        //     else
-        //     {
-        //     chdir(cdpath[cdpos-1]);
-        //     cdpath[cdpos++]=cdpath[cdpos-2];
-        //     }
-        // }
+        else if (strcmp(argv[1], "-") == 0)
+        {
+            tmp=prevpwd;
+            // chdir(oldpath[cdold]);
+        }
 
         else
-            chdir(argv[1]);
-        // cdpath[cdpos++]=argv[1];
+            tmp=argv[1];
+            // chdir(argv[1]);
     }
-    else
+    else //什么都没有
     {
-        chdir("/home/xvzewen");
-        // cdpath[cdpos++]="/home/xvzewen";
+        tmp="/home/xvzewen";
+        // chdir("/home/xvzewen");
     }
+    chdir(tmp);
+    curpwd=tmp;
+
 }
 
 void my_signal()
@@ -253,115 +263,111 @@ void my_signal()
     signal(SIGHUP, SIG_IGN);
 }
 
-
-
-
-void DoCommandPipe(char* argv[],int size)//处理管道
+void DoCommandPipe(char *argv[], int size) //处理管道
 {
     //获得每个管道的位置
     int pipepos[5];
-    int pipe_num=0;//计算管道的数量
-    for(int i=0;i<size;i++)
+    int pipe_num = 0; //计算管道的数量
+    for (int i = 0; i < size; i++)
     {
-        if(strcmp(argv[i],"|")==0)
+        if (strcmp(argv[i], "|") == 0)
         {
-            pipepos[pipe_num++]=i;
+            pipepos[pipe_num++] = i;
         }
     }
-    int cmd_num=pipe_num+1;
+    int cmd_num = pipe_num + 1;
 
     //获得管道之间的命令
-    char* cmd[cmd_num][7];
+    char *cmd[cmd_num][7];
 
-    for(int i=0;i<cmd_num;i++)//获得那些命令,
+    for (int i = 0; i < cmd_num; i++) //获得那些命令,
     {
-        if(i==0)//第一个命令
+        if (i == 0) //第一个命令
         {
-            int n=0;
-            for(int j=0;j<pipepos[0];j++)
+            int n = 0;
+            for (int j = 0; j < pipepos[0]; j++)
             {
-                cmd[i][n++]=argv[j];
+                cmd[i][n++] = argv[j];
             }
-            cmd[i][n]=NULL;
+            cmd[i][n] = NULL;
         }
-        else if(i==pipe_num)//最后一个命令
+        else if (i == pipe_num) //最后一个命令
         {
-            int n=0;
-            for(int j=pipepos[i-1]+1;j<size;j++)
+            int n = 0;
+            for (int j = pipepos[i - 1] + 1; j < size; j++)
             {
-                cmd[i][n++]=argv[j];
+                cmd[i][n++] = argv[j];
             }
-            cmd[i][n]=NULL;
+            cmd[i][n] = NULL;
         }
         else
         {
             //中间命令
-            int n=0;
-            for(int j=pipepos[i-1]+1;j<pipepos[i];j++)
+            int n = 0;
+            for (int j = pipepos[i - 1] + 1; j < pipepos[i]; j++)
             {
-                cmd[i][n++]=argv[j];
+                cmd[i][n++] = argv[j];
             }
-            cmd[i][n]=NULL;
+            cmd[i][n] = NULL;
         }
-    } 
-    //创建子进程来执行这些操作
-    int fd[pipe_num][2];//用来操作每一根管道
-    int i=0;
-    pid_t pid;//对进程进行操作
-    for(i=0;i<pipe_num;i++)
-    {
-        pipe(fd[i]);//创建管道，对应的是每个i的管道
     }
-    for(i=0;i<cmd_num;i++)
+    //创建子进程来执行这些操作
+    int fd[pipe_num][2]; //用来操作每一根管道
+    int i = 0;
+    pid_t pid; //对进程进行操作
+    for (i = 0; i < pipe_num; i++)
     {
-        if((pid=fork())==0)//对应i的进程
+        pipe(fd[i]); //创建管道，对应的是每个i的管道
+    }
+    for (i = 0; i < cmd_num; i++)
+    {
+        if ((pid = fork()) == 0) //对应i的进程
         {
             break;
         }
     }
-    if(pid==0)
+    if (pid == 0)
     {
-        //child
-        if(pipe_num)
+        // child
+        if (pipe_num)
         {
-            if(i==0)
+            if (i == 0)
             {
                 //第一个进程，把读端关掉，写端绑定
-                dup2(fd[0][1],1);
+                dup2(fd[0][1], 1);
                 close(fd[0][0]);
                 //其他管道读写端都关掉
-                for(int j=1;j<pipe_num;j++)
+                for (int j = 1; j < pipe_num; j++)
                 {
                     close(fd[j][0]);
                     close(fd[j][1]);
                 }
             }
-            else if(i==pipe_num)//执行最后一个命令
+            else if (i == pipe_num) //执行最后一个命令
             {
                 //把写端关掉，读端打开
-                dup2(fd[i-1][0],0);
-                close(fd[i-1][1]);
+                dup2(fd[i - 1][0], 0);
+                close(fd[i - 1][1]);
                 //其他的管道全关掉
-                for(int j=0;j<pipe_num-1;j++)
+                for (int j = 0; j < pipe_num - 1; j++)
                 {
                     close(fd[j][0]);
                     close(fd[j][1]);
                 }
-
             }
             else
             {
                 //中间命令
                 //把该命令管道前面的读端绑定，写端关闭
-                dup2(fd[i-1][0],0);
-                close(fd[i-1][1]);
+                dup2(fd[i - 1][0], 0);
+                close(fd[i - 1][1]);
                 //把该命令后面的管道的写端绑定，读端关闭
-                dup2(fd[i][1],1);
+                dup2(fd[i][1], 1);
                 close(fd[i][0]);
                 //其他全关闭
-                for(int j=0;j<pipe_num;j++)//除了我们操作的这两个管道以外的管道的读写端都关掉
+                for (int j = 0; j < pipe_num; j++) //除了我们操作的这两个管道以外的管道的读写端都关掉
                 {
-                    if(j!=i||j!=(i-1))
+                    if (j != i && j != (i - 1))
                     {
                         close(fd[j][0]);
                         close(fd[j][1]);
@@ -369,21 +375,23 @@ void DoCommandPipe(char* argv[],int size)//处理管道
                 }
             }
         }
-        execvp(cmd[i][0],cmd[i]);//执行命令
+
+        int ret = execvp(cmd[i][0], cmd[i]); //执行命令
+        if (ret == -1)
+        {
+            perror("execvp");
+            exit(-1);
+        }
     }
     //父进程什么都不干，把管道的所有口都关掉
-    for(i=0;i<pipe_num;i++)
+    for (i = 0; i < pipe_num; i++)
     {
         close(fd[i][0]);
-        close(fd[i][1]);//父进程端口全部关掉
-
+        close(fd[i][1]); //父进程端口全部关掉
     }
     //每次子进程执行完之后都要让父进程等待
-    for(i=0;i<cmd_num;i++)
+    for (i = 0; i < cmd_num; i++)
     {
         wait(NULL);
     }
-
-
 }
-
