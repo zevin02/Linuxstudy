@@ -1,15 +1,15 @@
 #include "myshell.h"
-char* prevpwd=NULL;
-char* curpwd;
-char buf[100];
-void CommandAnalys(char *argv[], int size /*,char* buf*/)
+char prevpwd[128];
+char *curpwd;
+
+void CommandAnalys(char *argv[], int size, char *command)
 // argv{"touch ","a","NULL"}
 {
 
     //父进程执行的命令
     if (size != 0 && strcmp(argv[0], "cd") == 0)
     {
-        Do_cd(argv[0], argv);
+        Do_cd(argv);
     }
     else if (size != 0 && strcmp(argv[0], "exit") == 0)
     {
@@ -24,6 +24,26 @@ void CommandAnalys(char *argv[], int size /*,char* buf*/)
     else
     {
         int flag = 0;
+        //判断是否有&
+        int backflag = 0;
+        for (int i = 0; i < size; i++)
+        {
+
+            if (strcmp(argv[i], "&") == 0)
+            {
+                backflag = 1;
+                if (strcmp(argv[0], "ls") == 0)
+
+                {
+                    argv[i] = argv[i + 1];
+                    argv[i + 1] = 0;
+                }
+                else
+                    argv[i] = 0;
+                size--;
+            }
+        }
+
         for (int i = 0; i < size; i++)
         {
             if (strcmp(argv[i], "|") == 0)
@@ -37,7 +57,7 @@ void CommandAnalys(char *argv[], int size /*,char* buf*/)
 
                 ; // DoPipe(argv, size);
                 // command_with_Pipe(buf);
-                DoCommandPipe(argv, size);
+                DoCommandPipe(argv, size, backflag);
                 flag = 1;
                 break;
                 // exit(ret);
@@ -62,6 +82,7 @@ void CommandAnalys(char *argv[], int size /*,char* buf*/)
                 flag = 1;
                 break;
             }
+
             if (strcmp(argv[i], "<") == 0)
             {
                 if (strcmp(argv[0], "ls") == 0)
@@ -72,16 +93,6 @@ void CommandAnalys(char *argv[], int size /*,char* buf*/)
                 flag = 1;
                 break;
             }
-        }
-        if (strcmp(argv[size - 1], "&") == 0)
-        {
-            // ls -a -l & -auto
-            if (strcmp(argv[0], "ls") == 0)
-            {
-                size--;
-            }
-            DoBackRun(argv, size);
-            return;
         }
 
         if (flag)
@@ -102,34 +113,18 @@ void CommandAnalys(char *argv[], int size /*,char* buf*/)
                 }
                 exit(1);
             }
-            waitpid(id, NULL, 0);
+            if (backflag)
+            {
+                printf("%d  %s \n", getpid(), command);
+                exit(0);
+            }
+            else
+                waitpid(id, NULL, 0);
         }
     }
 }
 
-void DoBackRun(char *argv[], int size)
-{
-    //执行后台命令
-    pid_t id = fork();
-    if (id < 0)
-    {
-        perror("fork");
-    }
-    if (id == 0)
-    {
-        // child
-        freopen("/dev/null", "w", stdout);
-        freopen("/dev/null", "r", stdin);
-        signal(SIGCHLD, SIG_IGN);
-        CommandAnalys(argv, size);
-        execvp(argv[0], argv);
-        perror("execvp");
-    }
-    else
-    {
-        exit(0);
-    }
-}
+
 void ShowHistory()
 {
     int i = 3;
@@ -223,38 +218,30 @@ void DoRedefDir(char *argv[], int size, int youpos, char *command)
     close(fd);
 }
 
-void Do_cd(char *filename, char *argv[])
+void Do_cd(char *argv[])
 {
-  
-    char* tmp=NULL;
-    if(prevpwd==NULL)
-    prevpwd=buf;
-    if (argv[1])
+    if (argv[1] == NULL) //什么都没有，就执行～
     {
-        if (strcmp(argv[1], "~") == 0)
-        {
-            tmp="/home/xvzewen";
-            // strcmp(argv[1],"/home/xvzewen");
-            // chdir("/home/xvzewen");
-        }
-        else if (strcmp(argv[1], "-") == 0)
-        {
-            tmp=prevpwd;
-            // chdir(oldpath[cdold]);
-        }
-
-        else
-            tmp=argv[1];
-            // chdir(argv[1]);
+        getcwd(prevpwd, sizeof(prevpwd)); //保存当前的路径，以被-使用
+        chdir("/home/xvzewen");
     }
-    else //什么都没有
+    else if (strcmp(argv[1], "-") == 0) //切换回之前的路径
     {
-        tmp="/home/xvzewen";
-        // chdir("/home/xvzewen");
+        char strpwd1[100]; //保存当前路径
+        getcwd(strpwd1, sizeof(prevpwd));
+        chdir(prevpwd); //切换到之前的路径
+        strcpy(prevpwd, strpwd1);
     }
-    chdir(tmp);
-    curpwd=tmp;
-
+    else if (strcmp(argv[1], "~") == 0)
+    {
+        getcwd(prevpwd, sizeof(prevpwd));
+        chdir("/home/xvzewen");
+    }
+    else
+    {
+        getcwd(prevpwd, sizeof(prevpwd));
+        chdir(argv[1]);
+    }
 }
 
 void my_signal()
@@ -263,7 +250,7 @@ void my_signal()
     signal(SIGHUP, SIG_IGN);
 }
 
-void DoCommandPipe(char *argv[], int size) //处理管道
+void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
 {
     //获得每个管道的位置
     int pipepos[5];
@@ -390,8 +377,14 @@ void DoCommandPipe(char *argv[], int size) //处理管道
         close(fd[i][1]); //父进程端口全部关掉
     }
     //每次子进程执行完之后都要让父进程等待
+
     for (i = 0; i < cmd_num; i++)
     {
-        wait(NULL);
+        if (!backflag)
+            wait(NULL);
+        else
+        {
+            exit(0);
+        }
     }
 }

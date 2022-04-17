@@ -29,10 +29,10 @@ extern int write_history PARAMS((const char *));
 extern HIST_ENTRY **history_list PARAMS((void));//用来执行history命令的声明
 
 
-void CommandAnalys(char *argv[], int size/*,char* command*/);
+void CommandAnalys(char *argv[], int size,char* command);
 int IsFarDo(char *filename);                     //判断是否需要父进程去执行
 void DoFarProcess(char *filename, char *argv[]); //需要父进程去实现的命令
-void Do_cd(char *filename, char *argv[]);        //执行cd命令
+void Do_cd(char *argv[]);        //执行cd命令
 // void Do_pipe(char*argv[]);//子进程执行管道命令
 void my_signal();
 void PrintHint();
@@ -43,11 +43,9 @@ void ShowHistory();
 void DoBackRun(char* argv[],int size);
 // void DoPipe(char*argv[],int size,int pipepos);//实现管道
 // void DoPipe(char* argv[],int size);
-void DoCommandPipe(char* argv[],int size);//处理管道
+void DoCommandPipe(char* argv[],int size,int backflag);//处理管道
 
-extern char* prevpwd;
-extern char* curpwd;
-extern char buf[100];
+extern char prevpwd[128];
 
 #endif
 
