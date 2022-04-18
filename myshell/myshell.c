@@ -24,6 +24,12 @@ void CommandAnalys(char *argv[],int size)
            flag=1;
           break;
         }
+        if(strcmp(argv[i],"<")==0)
+        {
+          DoInRedefDir(argv,size,i);
+          flag=1;
+          break;
+        }
     }
     if(flag)
     {
@@ -79,7 +85,15 @@ void DoRedefDir(char*argv[],int size,int youpos,char*command)
 
     waitpid(-1,NULL,0);
     dup2(oldfd,1);
+    close(fd);
 }
+
+void DoInRedefDir(char* argv[],int size,int i)
+{
+  //实现输入重定向
+  //
+}
+
 
 void DoFarProcess(char *filename, char *argv[])
 {

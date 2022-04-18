@@ -18,3 +18,4 @@ void Do_cd(char* filename,char*argv[]);//执行cd命令
 void my_signal();
 void PrintHint();
 void DoRedefDir(char*argv[],int size,int youpos,char*command);
+void DoInRedefDir(char* argv[],int size,int i);
