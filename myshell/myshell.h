@@ -26,7 +26,7 @@
 extern void add_history PARAMS((const char *)); //解决
 extern int read_history PARAMS((const char *));
 extern int write_history PARAMS((const char *));
-extern HIST_ENTRY **history_list PARAMS((void));//用来执行history命令的声明
+extern HIST_ENTRY **history_list  (PARAMS((void));//用来执行history命令的声明
 
 
 void CommandAnalys(char *argv[], int size,char* command);
@@ -36,10 +36,6 @@ void Do_cd(char *argv[]);        //执行cd命令
 // void Do_pipe(char*argv[]);//子进程执行管道命令
 void my_signal();
 void PrintHint();
-<<<<<<< HEAD
-void DoRedefDir(char*argv[],int size,int youpos,char*command);
-void DoInRedefDir(char* argv[],int size,int i);
-=======
 void DoRedefDir(char *argv[], int size, int rightpos, char *command);  //实现输出重定向
 void DoInputRedef(char *argv[], int size, int leftpos, char *command); //输入重定向
 void DoProcExit();
@@ -53,4 +49,3 @@ extern char prevpwd[128];
 
 #endif
 
->>>>>>> 53e3021b58b21634f9048fe41db27fd513625003
