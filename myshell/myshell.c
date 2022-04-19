@@ -116,7 +116,8 @@ void CommandAnalys(char *argv[], int size, char *command)
             if (backflag)
             {
                 printf("%d  %s \n", getpid(), command);
-                exit(0);
+                // exit(0);
+                return;
             }
             else
                 waitpid(id, NULL, 0);
@@ -272,24 +273,19 @@ void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
     //获得每个管道的位置
     int pipepos[5];
     int pipe_num = 0; //计算管道的数量
-    int in = 0, out = 0;
-    for (int i = 0; i < size; i++)
+    int in,out;
+    in=out=0;
+    char *filename="1.txt";
+    int rflag=0;
+    for (int t = 0; t < size; t++)
     {
-        if (strcmp(argv[i], ">") == 0)
+        
+        if (strcmp(argv[t], "|") == 0||strcmp(argv[t],">")==0)
         {
-            out=1;
-        }
-        if (strcmp(argv[i], "<") == 0)
-        {
-            in=1;
-        }
-        if (strcmp(argv[i], "|") == 0)
-        {
-            pipepos[pipe_num++] = i;
+            pipepos[pipe_num++] = t;
         }
     }
-    int cmd_num = pipe_num + 1;
-
+    int cmd_num = pipe_num + 1; 
     //获得管道之间的命令
     char *cmd[cmd_num][7];
 
@@ -396,15 +392,15 @@ void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
             exit(-1);
         }
     }
-    if(in)
+    if (in)
     {
-        int fd=open(argv[size-1],O_RDONLY);
-        dup2(fd,0);
+        int fd = open(filename, O_RDONLY);
+        dup2(fd, 0);
     }
-    if(out)
+    if (out)
     {
-        int fd=open(argv[size-1],O_WRONLY|O_TRUNC|O_CREAT,0666);
-        dup2(fd,1);
+        int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0666);
+        dup2(fd, 1);
     }
     //父进程什么都不干，把管道的所有口都关掉
     for (i = 0; i < pipe_num; i++)
