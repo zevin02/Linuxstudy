@@ -4,7 +4,7 @@
 
 int main()
 {
-  mkfifo("abcdef",0664);
+  // mkfifo("abcdef",0664);
   //一定是一个死循环程序
   my_signal();
   read_history(NULL);
