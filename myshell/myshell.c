@@ -122,12 +122,6 @@ void CommandAnalys(char *argv[], int size, char *command)
             else
                 waitpid(id, NULL, 0);
         }
-        if(strcmp(argv[i],"<")==0)
-        {
-          DoInRedefDir(argv,size,i);
-          flag=1;
-          break;
-        }
     }
 }
 
@@ -215,28 +209,12 @@ void DoRedefDir(char *argv[], int size, int youpos, char *command)
         }
     }
 
-<<<<<<< HEAD
-    waitpid(-1,NULL,0);
-    dup2(oldfd,1);
-    close(fd);
-}
-
-void DoInRedefDir(char* argv[],int size,int i)
-{
-  //实现输入重定向
-  //
-}
-
-
-void DoFarProcess(char *filename, char *argv[])
-=======
     waitpid(-1, NULL, 0);
     dup2(oldfd, 1);
     close(fd);
 }
 
 void Do_cd(char *argv[])
->>>>>>> 53e3021b58b21634f9048fe41db27fd513625003
 {
     if (argv[1] == NULL) //什么都没有，就执行～
     {

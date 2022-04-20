@@ -26,7 +26,7 @@
 extern void add_history PARAMS((const char *)); //解决
 extern int read_history PARAMS((const char *));
 extern int write_history PARAMS((const char *));
-extern HIST_ENTRY **history_list  (PARAMS((void));//用来执行history命令的声明
+extern HIST_ENTRY **history_list PARAMS((void));//用来执行history命令的声明
 
 
 void CommandAnalys(char *argv[], int size,char* command);
