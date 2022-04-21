@@ -28,7 +28,6 @@ int main()
     }
     // add_history(buf);
 
-
     add_history(command);
     write_history(NULL);
 
@@ -68,7 +67,7 @@ int main()
         argv[1] = "/home/xvzewen";
       }
     }
-    CommandAnalys(argv, i,command);
+    CommandAnalys(argv, i, command);
     free(command);
   }
   write_history(NULL);
