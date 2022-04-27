@@ -14,6 +14,13 @@ int main()
   //获得了一个key值,但是这个key现在是只能在server这个进程使用，我们拷贝一下让client也能使用
   printf("key=%u\n",key);
   int shmid=shmget(key,SIZE,0);//我们这里只需要获得就可以了
+  //挂接上
+  char* mem=(char*)shmat(shmid,NULL,0);
+
+
+
+  //取消挂接
+  shmdt(mem);
 
 
   return 0;
