@@ -6,6 +6,8 @@
 #include<sys/wait.h>
 void wmorer()
 {
+  //写端比读端快，读端处于阻塞状态
+  //读端比写端快，写端处于阻塞状态
   int fd[2];
   int ret=pipe(fd);
   if(ret==-1)
