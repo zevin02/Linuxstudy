@@ -20,6 +20,9 @@ int main()
   {
     count++;
     //printf("hello %d\n",count++);
+    //为何在这里这么慢呢
+    //+了printfIO操作，与硬件进行交互，还有远端的操作，所以效率差别非常的大
+    //所以程序中出现大量的IO的话，要考虑程序的效率
   }
   return 0;
 }
