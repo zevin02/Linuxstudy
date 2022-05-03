@@ -3,8 +3,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include<pthread.h>
-#include<string.h>
+#include <pthread.h>
+#include <string.h>
 
 /*
 
@@ -16,7 +16,6 @@ vfork
 2.会保证子进程先运行，在他调用完exec（进程替换）或exit（进程退出）之后，父进程才会进行调度
 所以如果子进程没有exec或exit的话，程序会导致死锁，程序是有问题的
 */
-
 
 /*
 
@@ -65,9 +64,9 @@ int main()
 }
 
 */
-    //线程创建
+//线程创建
 
-//int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void*), void *arg);
+// int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void*), void *arg);
 /*
     功能：创建一个新线程
     参数：
@@ -79,7 +78,7 @@ int main()
     返回值：成功返回0，失败返回一个错误码
 
     主线程创建了一个新线程，此后新线程会去执行它要执行的操作，而主线程会继续往下执行它的操作
-*/  
+*/
 
 /*
 
@@ -93,7 +92,7 @@ void* Routine(void *arg)
     }
 }
 int main()
-{   
+{
     pthread_t tid1,tid2,tid3;
     int ret1=pthread_create(&tid1,NULL,Routine,(void*)"pthread 1");
     //ret1=0就代表正常返回，否则就代表错误返回,错误会返回错误码
@@ -124,8 +123,6 @@ int main()
 }
 */
 
-
-
 /*
     线程id
 
@@ -143,7 +140,6 @@ int main()
     这个ID 本质上就是进程地址空间上的一个地址
 
 */
-
 
 /*
     线程终止
@@ -194,14 +190,14 @@ int main()
 
 */
 
-
+/*
 void* thread1(void * arg)
 {
     printf("%s returning.....\n",(char*)arg);
     int *p =(int*)malloc(sizeof(int));
     *p=10;
     return (void*)p;//返回值//使用return进行执行线程退出，这里使用的是malloc开辟出来的空间
-    
+
 }
 
 void* thread2(void* arg)
@@ -240,7 +236,7 @@ int main()
     pthread_join(tid,&ret);
     printf("thread 2 exiting ,thread id:%x,return code:%d\n",tid,*(int*)ret);//我们要先强制类型转换，对其进行解引用
     free(ret);
-    
+
     //第3次，我们使用pthread_cancel进行退出
     pthread_create(&tid,NULL,thread3,(void*)"thread 3");
     sleep(3);//因为不建议线程创建后立即cancel，所以我们等上一会，让它在线程执行中被取消
@@ -257,3 +253,73 @@ int main()
     pthread_join(tid,&ret);
     return 0;
 }
+
+*/
+
+
+
+
+
+int val = 0;
+struct Ret
+{
+    int exitno;
+    int exittime;
+    //
+};
+
+void *Routine(void *arg)
+{
+    int cnt = 1;
+    while (1)
+    {
+        printf("I am %s..val:%d\n", (char *)arg, val);
+        sleep(1);
+        cnt++;
+        if (cnt == 3)
+        {
+            struct Ret *p = (struct Ret *)malloc(sizeof(struct Ret));
+            p->exitno = 0;
+            p->exittime = 6666;
+            pthread_exit((void *)p); //线程退出，
+        }
+    }
+}
+
+int main()
+{
+    pthread_t tid1, tid2, tid3;
+    pthread_create(&tid1, NULL, Routine, (void *)"thread 1"); //执行同一个函数
+    pthread_create(&tid2, NULL, Routine, (void *)"thread 2");//数据共享，基本同时执行，所以第一次打印出来的值都一样
+    pthread_create(&tid3, NULL, Routine, (void *)"thread 3");
+    int cnt = 0;
+    while (1)
+    {
+        printf("I am main pthread..val: %d\n", val++);
+        sleep(1);
+        cnt++;
+        if (cnt == 3)
+        {
+            break;
+        }
+    }
+    printf("wait for pthread...\n");
+    void *ret;
+    pthread_join(tid1, &ret);
+    printf("pthread id: %x ,exitno:%d,exittime:%d\n", tid1, ((struct Ret *)ret)->exitno, ((struct Ret *)ret)->exittime);
+    pthread_join(tid1, &ret);
+    printf("pthread id: %x ,exitno:%d,exittime:%d\n", tid2, ((struct Ret *)ret)->exitno, ((struct Ret *)ret)->exittime);
+    pthread_join(tid1, &ret);
+    printf("pthread id: %x ,exitno:%d,exittime:%d\n", tid3, ((struct Ret *)ret)->exitno, ((struct Ret *)ret)->exittime);
+    return 0;
+}
+
+
+
+
+
+/*
+    线程分离
+
+
+*/
