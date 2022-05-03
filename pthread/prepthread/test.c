@@ -257,7 +257,7 @@ int main()
 */
 
 
-
+/*
 
 
 int val = 0;
@@ -315,11 +315,58 @@ int main()
 }
 
 
-
+*/
 
 
 /*
     线程分离
+    1.默认情况下，新创建的线程是joinable的，线程退出的时候，需要对他进行pthread_join操作
+    2.如果不关心线程的返回值，那么join是一个负担，可以告诉系统 ，线程退出的时候，自动释放线程资源
+
+    int pthread_detach(pthread_t thread)
+    成功返回0，失败返回错误码
+
+    设置为detach的状态，让os来回收它的资源，会自动释放它的空间
+
+    1.可以其他线程对目标线程进行分离，也可以自己分离自己
+    2.join和分离是冲突的，一个线程要么分离要么joinable
+    3.线程分离具有一定的延迟性，分离后如果再进行等待，那么得到的结果未定义
+    4.如果分离的线程程序崩溃，同样整个线程也会崩溃，线程分离之后只是在回收的时候进行自动回收，如果主线程退出，那么整个线程也会退出
 
 
+    默认线程都是joinable的
+    
 */
+
+
+
+
+void* Routine(void* arg)
+{
+    pthread_detach(pthread_self());//我们在这里就给它注册上，让它实行线程分离
+    printf("%s detach success!\n");
+    int cnt=0;
+    while(cnt<5)
+    {
+        cnt++;
+        printf("%s running ...cnt:%d\n",(char*)arg,cnt);
+        sleep(1);
+    }
+    printf("%s return ...\n");
+    return NULL;
+}
+
+int main()
+{
+    pthread_t tid;
+    pthread_create(&tid,NULL,Routine,(void*)"thread");
+    sleep(3);//执行3秒之后就会自动实现线程分离，就退出了，没有等待的话就会直接出错，所以要等待一会，让线程先分离
+    void* ret;
+    if(pthread_join(tid,&ret)==0)
+    {
+        printf("thread join success ! ret:%d",*(int*)ret);
+    }
+    else 
+    printf("thread join fail.. ret:%d\n",*(int*)ret);
+    return 0;
+}
