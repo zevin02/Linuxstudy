@@ -12,46 +12,46 @@ int data = 0;
 void *C_func(void *arg)
 {
 
-    while (1)
+    while (true)
     {
         pthread_mutex_lock(&mutex);
-        pthread_cond_wait(&cond, NULL); //我们调用完这个之后会解锁
-        if (data > 0)
-        {
-            pthread_cond_signal(&cond);
-        }
+        while(data==0)//如果消费者发现缓存里面没有数据，那么我们就应该挂起来等待
+        pthread_cond_wait(&cond, &mutex); //我们调用完这个之后会解锁
+        
         data--;
         cout << "consumer consume a data now data =" << data << endl;
-        sleep(1);
+        usleep(100);
         //操作完之后就立刻就上锁了
 
         pthread_mutex_unlock(&mutex); //
+        pthread_cond_signal(&cond);//消费完了就把生产者唤醒，告诉它可以继续生产了，
     }
     int *p = new int;
     *p = 0;
-    pthread_exit(p);
+    pthread_exit((void*)p);
+    // return NULL;
 }
 
 void *P_func(void *arg)
 {
-    while (1)
+    while (true)
     {
         pthread_mutex_lock(&mutex);
-        pthread_cond_wait(&cond, NULL);
-        if (data < capacity)
-        {
-            pthread_cond_signal(&cond);
-        }
+        while(data==capacity)//如果发现缓存里面的数据已经满了，就应该挂起来等待消费者拿数据，
+        pthread_cond_wait(&cond, &mutex);
+        
         data++;
         cout << "producer produce a data now data =" << data << endl;
-        sleep(1);
+        usleep(100);
         //操作完之后就立刻就上锁了
 
         pthread_mutex_unlock(&mutex); //
+        pthread_cond_signal(&cond);//生产完了就把消费者唤醒告诉他里面有数据了
     }
     int *p = new int;
     *p = 0;
-    pthread_exit(p);
+    pthread_exit((void*)p);
+    // return NULL;
 }
 
 int main()
