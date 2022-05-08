@@ -99,17 +99,15 @@ void *produce(void *arg)
     while (true)
     {
         pthread_mutex_lock(&pd);
-        // while (now == qt.capacity())
-        // {
-        //     pthread_cond_wait(&condd, &pd);
-        // }
+     
         static int cnt = 0;
         element t;
         int x = rand() % 50 + 1;
         t.data = x;
         now += x;
         t.id = pthread_self();
-        char *name = (char *)arg;
+      
+        long name = (long)arg;
 
         qt.Push(t);
         cnt++;
@@ -118,7 +116,7 @@ void *produce(void *arg)
              << " total =" << now << endl;
         pthread_mutex_unlock(&pd);
         usleep(100);
-        // pthread_cond_signal(&condd);
+     
     }
     // return NULL;
 }
@@ -128,11 +126,8 @@ void *consume(void *arg)
     while (true)
     {
         pthread_mutex_lock(&cm);
-        // while (qt.empty())
-        // {
-        //     pthread_cond_wait(&condd, &cm);
-        // }
-        char *name = (char *)arg;
+    
+        long name=(long) arg;//不能从一个 int强转为char* 会出现内存错误
         element t = qt.front();
         now -= t.data;
         qt.Pop();
@@ -142,71 +137,47 @@ void *consume(void *arg)
              << " total =" << now << endl;
         pthread_mutex_unlock(&cm);
         usleep(100);
-        // pthread_cond_signal(&condd);
+       
     }
-    // return NULL;
+
 }
 
 int main()
 {
 
-    // pthread_t p[5];
-    // pthread_t c[5];
-    // memset(p, 0, sizeof(p));
-    // memset(c, 0, sizeof(c));
-    // pthread_mutex_init(&pd, NULL);
-    // pthread_mutex_init(&cm, NULL);
-    // pthread_cond_init(&condd, NULL);
-    // for (int i = 0; i < 5; i++)
-    // {
+    pthread_t p[5];
+    pthread_t c[5];
+    memset(p, 0, sizeof(p));
+    memset(c, 0, sizeof(c));
+    pthread_mutex_init(&pd, NULL);
+    pthread_mutex_init(&cm, NULL);
+    pthread_cond_init(&condd, NULL);
+    for (int i = 0; i < 5; i++)
+    {
 
-    //     int ret = pthread_create(p+i, NULL, produce, (void *)(i));
-    //     if (ret != 0)
-    //     {
-    //         perror("pthread_create");
-    //     }
-    // }
-    // for (int i = 0; i < 5; i++)
-    // {
+        pthread_create(p+i, NULL, produce, (void *)(i));
+  
+    }
+    for (int i = 0; i < 5; i++)
+    {
 
-    //     int ret = pthread_create(c+i, NULL, consume, (void *)(i));
-    //     if (ret != 0)
-    //     {
-    //         perror("pthread_create");
-    //     }
-    // }
+        pthread_create(c+i, NULL, consume, (void *)(i));
+       
+    }
+    for (int i = 0; i < 5; i++)
+    {
+       
+         pthread_join(p[i], NULL);
+         
+    }
+  
 
-    // for (int i = 0; i < 5; i++)
-    // {
-    //     void *val;
-    //     int ret = pthread_join(p[i], &val);
-    //     if (ret != 0)
-    //     {
-    //         printf("return code :%d\n", *(int *)ret);
-    //     }
-    // }
-    // cout << "1" << endl;
+    for (int i = 0; i < 5; i++)
+    {
+       
+         pthread_join(c[i], NULL);       
+    }
 
-    // for (int i = 0; i < 5; i++)
-    // {
-    //     void *val;
-    //     int ret = pthread_join(c[i], &val);
-    //     if (ret != 0)
-    //     {
-    //         printf("return code :%d\n", *(int *)ret);
-    //     }
-    // }
-
-    pthread_t c1,c2;
-    pthread_t p1,p2;
-    pthread_create(&c1,NULL,consume,(void*)"c1");
-    pthread_create(&c2,NULL,consume,(void*)"c2");
-    pthread_create(&p1,NULL,produce,(void*)"p1");
-    pthread_create(&p2,NULL,produce,(void*)"p2");
-    pthread_join(p1, NULL);
-    pthread_join(p2, NULL);
-    pthread_join(c1, NULL);
-    pthread_join(c2, NULL);
     pthread_mutex_destroy(&pd);
     pthread_mutex_destroy(&cm);
     pthread_cond_destroy(&condd);
