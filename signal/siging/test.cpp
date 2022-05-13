@@ -52,7 +52,8 @@ int main()
 
     //设置当前信号的屏蔽字
     //获取当前进程老的屏蔽字
-    sigprocmask(SIG_SETMASK,&iset,&oset);//把2号信号给屏蔽掉了
+    // sigprocmask(SIG_SETMASK,&iset,&oset);//把2号信号给屏蔽掉了
+    sigprocmask(SIG_BLOCK,&iset,&oset);//用block的方法也可以设置屏蔽
     // sigprocmask(SIG_UNBLOCK,&iset,&oset);//把2号信号给解除屏蔽了
     // sigprocmask(SIG_BLOCK,&iset,&oset);//把2号信号给屏蔽掉了
     //ctrl c 给屏蔽掉了，不会被递达的
@@ -72,7 +73,8 @@ int main()
             //把2号信号解除屏蔽
             //老的屏蔽字没有对2号进行屏蔽
             //在这之前2号信号都已经被屏蔽掉了，所以前面用ctrl c是没什么用的
-            sigprocmask(SIG_SETMASK,&oset,NULL);//在这里之后才可以有用的
+            // sigprocmask(SIG_SETMASK,&oset,NULL);//在这里之后才可以有用的
+            sigprocmask(SIG_UNBLOCK,&iset,&oset);//使用unblock的方法也可以对他进行解除屏蔽
             cout<<"恢复对2号屏蔽字的使用,可以被递达了"<<endl;
             //被递达了之后，又会,我们无法看到恢复屏蔽，2号信号的默认动作是终止进程，所以看不到现象
         }
