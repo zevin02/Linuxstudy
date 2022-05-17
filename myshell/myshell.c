@@ -240,23 +240,25 @@ void Do_cd(char *argv[])
     }
 }
 
-
-
 void handler()
 {
     printf("the process has receive a quit signal\n");
+}
+void hand()
+{
+    printf("put the 2");
 }
 void my_signal()
 {
     signal(SIGINT, SIG_IGN);//SIG_IGN 是忽略选项
     signal(3,handler);
-    struct sigaction s;
-    memset(&s,0,sizeof(s));
-    s.sa_handler=hand;    
-    sigemptyset(&s.sa_mask);
-    sigaddset(&s.sa_mask,4);
-    sigaddset(&s.sa_mask, SIGFPE);    
-    sigaction(2,&s,NULL);
+    struct sigaction act;
+    memset(&act,0,sizeof(act));
+    act.sa_handler=hand;    
+    sigemptyset(&act.sa_mask);
+    sigaddset(&act.sa_mask,4);
+    sigaddset(&act.sa_mask, SIGFPE);    
+    sigaction(2,&act,NULL);
 }
 
 void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
