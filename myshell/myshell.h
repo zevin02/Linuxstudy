@@ -13,6 +13,8 @@
 #include <fcntl.h>
 #include<sys/stat.h>
 #include <signal.h>
+#include<sys/shm.h>
+#include<sys/ipc.h>
 
 
 //解决颜色和避免输入太长导致被覆盖掉
@@ -44,7 +46,7 @@ void DoBackRun(char* argv[],int size);
 // void DoPipe(char*argv[],int size,int pipepos);//实现管道
 // void DoPipe(char* argv[],int size);
 void DoCommandPipe(char* argv[],int size,int backflag);//处理管道
-
+void sharemem(char* argv[],int size);
 extern char prevpwd[128];
 
 #endif

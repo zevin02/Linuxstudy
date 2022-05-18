@@ -53,10 +53,7 @@ void CommandAnalys(char *argv[], int size, char *command)
                     size--;
                 }
 
-                // int ret=callCommandWithPipe(argv, 0, size);
-
-                ; // DoPipe(argv, size);
-                // command_with_Pipe(buf);
+                ;
                 DoCommandPipe(argv, size, backflag);
                 flag = 1;
                 break;
@@ -252,7 +249,7 @@ void my_signal()
 {
     signal(1, SIG_IGN);  // SIG_IGN 是忽略选项,1号挂起信号
     signal(4, SIG_DFL);  // 4号信号执行默认选项
-    signal(3, handler);  // 3号信号（quit）处理使用handler函数
+    signal(5, handler);  // 3号信号（quit）处理使用handler函数
     sigset_t iset, oset; //对2号信号进行阻塞
     sigemptyset(&iset);
     sigemptyset(&oset);
@@ -260,20 +257,12 @@ void my_signal()
     sigprocmask(SIG_SETMASK, &iset, &oset); //对2号信号进行屏蔽
     //过了100秒才会对它进行解除屏蔽
     // printf("对2号信号进行屏蔽\n");
-    int cnt = 0;
+
     if (sigismember(&iset, 2))
     {
-        while (1)
-        {
-            cnt++;
-            sleep(1);
-            if (cnt == 10)
-            {
-                sigprocmask(SIG_SETMASK, &oset, NULL); //解除屏蔽
-                printf("解除了对2号信号的屏蔽\n");
-                break;
-            }
-        }
+
+        sigprocmask(SIG_SETMASK, &oset, NULL); //解除屏蔽
+        printf("解除了对2号信号的屏蔽\n");
     }
     struct sigaction act; // sigaction使用与signal做区别
     memset(&act, 0, sizeof(act));
@@ -282,6 +271,47 @@ void my_signal()
     sigaddset(&act.sa_mask, 4);
     sigaddset(&act.sa_mask, SIGFPE);
     sigaction(2, &act, NULL); // 2号信号使用
+}
+
+void sharemem(char *argv[], int size)
+{
+    //使用共享内存进行进程间通信
+    //先获得一个key值，先获得一个内存的表示符号
+    key_t key = ftok("./", 4044);
+    int shmid = shmget(key, 4096, IPC_CREAT | IPC_EXCL | 0666); //开辟一个共享内存空间，失败就错误返回
+    //挂接上
+    if (shmid < 0)
+    {
+        perror("shmget");
+        exit(2);
+    }
+    char *mem = (char *)shmat(shmid, NULL, 0); //第二个参数是挂接到什么地方去，不用我们关心直接NULL就行
+    //先获得前后两个指令,子进程执行前面的指令，将获得的结果存放到一个文件里面
+    // ls | grep i
+    int i = 0;
+
+    //获得了指令
+    pid_t id = vfork(); //让子进程先执行
+
+    if (id < 0)
+    {
+
+        perror("vfork");
+        exit(-1);
+        strcpy(mem, "sl");
+    }
+    else
+    {
+        // father
+        waitpid(-1, NULL, 0); //阻塞等待子进程执行完任务
+        if (strcmp(mem, "sl") == 0)
+        {
+            printf("%s\n", mem);
+            printf("shmdo\n");
+        }
+        shmdt(mem);                    //取消挂接
+        shmctl(shmid, IPC_RMID, NULL); //删除共享内存
+    }
 }
 
 void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
@@ -294,145 +324,152 @@ void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
     char *filename = "1.txt";
     int rflag = 0;
     for (int t = 0; t < size; t++)
-    {
+    {71
 
         if (strcmp(argv[t], "|") == 0 || strcmp(argv[t], ">") == 0)
         {
             pipepos[pipe_num++] = t;
         }
     }
-    int cmd_num = pipe_num + 1;
-    //获得管道之间的命令
-    char *cmd[cmd_num][7];
+    if (pipe_num == 1)
+    {
+        sharemem(argv, size);
+    }
+    else
+    {
+        int cmd_num = pipe_num + 1;
+        //获得管道之间的命令
+        char *cmd[cmd_num][7];
 
-    for (int i = 0; i < cmd_num; i++) //获得那些命令,
-    {
-        if (i == 0) //第一个命令
+        for (int i = 0; i < cmd_num; i++) //获得那些命令,
         {
-            int n = 0;
-            for (int j = 0; j < pipepos[0]; j++)
+            if (i == 0) //第一个命令
             {
-                cmd[i][n++] = argv[j];
-            }
-            cmd[i][n] = NULL;
-        }
-        else if (i == pipe_num) //最后一个命令
-        {
-            int n = 0;
-            for (int j = pipepos[i - 1] + 1; j < size; j++)
-            {
-                cmd[i][n++] = argv[j];
-            }
-            cmd[i][n] = NULL;
-        }
-        else
-        {
-            //中间命令
-            int n = 0;
-            for (int j = pipepos[i - 1] + 1; j < pipepos[i]; j++)
-            {
-                cmd[i][n++] = argv[j];
-            }
-            cmd[i][n] = NULL;
-        }
-    }
-    //创建子进程来执行这些操作
-    int fd[pipe_num][2]; //用来操作每一根管道
-    int i = 0;
-    pid_t pid; //对进程进行操作
-    for (i = 0; i < pipe_num; i++)
-    {
-        pipe(fd[i]); //创建管道，对应的是每个i的管道
-    }
-    for (i = 0; i < cmd_num; i++)
-    {
-        if ((pid = fork()) == 0) //对应i的进程
-        {
-            break;
-        }
-    }
-    if (pid == 0)
-    {
-        // child
-        if (pipe_num)
-        {
-            if (i == 0)
-            {
-                //第一个进程，把读端关掉，写端绑定
-                dup2(fd[0][1], 1);
-                close(fd[0][0]);
-                //其他管道读写端都关掉
-                for (int j = 1; j < pipe_num; j++)
+                int n = 0;
+                for (int j = 0; j < pipepos[0]; j++)
                 {
-                    close(fd[j][0]);
-                    close(fd[j][1]);
+                    cmd[i][n++] = argv[j];
                 }
+                cmd[i][n] = NULL;
             }
-            else if (i == pipe_num) //执行最后一个命令
+            else if (i == pipe_num) //最后一个命令
             {
-                //把写端关掉，读端打开
-                dup2(fd[i - 1][0], 0);
-                close(fd[i - 1][1]);
-                //其他的管道全关掉
-                for (int j = 0; j < pipe_num - 1; j++)
+                int n = 0;
+                for (int j = pipepos[i - 1] + 1; j < size; j++)
                 {
-                    close(fd[j][0]);
-                    close(fd[j][1]);
+                    cmd[i][n++] = argv[j];
                 }
+                cmd[i][n] = NULL;
             }
             else
             {
                 //中间命令
-                //把该命令管道前面的读端绑定，写端关闭
-                dup2(fd[i - 1][0], 0);
-                close(fd[i - 1][1]);
-                //把该命令后面的管道的写端绑定，读端关闭
-                dup2(fd[i][1], 1);
-                close(fd[i][0]);
-                //其他全关闭
-                for (int j = 0; j < pipe_num; j++) //除了我们操作的这两个管道以外的管道的读写端都关掉
+                int n = 0;
+                for (int j = pipepos[i - 1] + 1; j < pipepos[i]; j++)
                 {
-                    if (j != i && j != (i - 1))
+                    cmd[i][n++] = argv[j];
+                }
+                cmd[i][n] = NULL;
+            }
+        }
+        //创建子进程来执行这些操作
+        int fd[pipe_num][2]; //用来操作每一根管道
+        int i = 0;
+        pid_t pid; //对进程进行操作
+        for (i = 0; i < pipe_num; i++)
+        {
+            pipe(fd[i]); //创建管道，对应的是每个i的管道
+        }
+        for (i = 0; i < cmd_num; i++)
+        {
+            if ((pid = fork()) == 0) //对应i的进程
+            {
+                break;
+            }
+        }
+        if (pid == 0)
+        {
+            // child
+            if (pipe_num)
+            {
+                if (i == 0)
+                {
+                    //第一个进程，把读端关掉，写端绑定
+                    dup2(fd[0][1], 1);
+                    close(fd[0][0]);
+                    //其他管道读写端都关掉
+                    for (int j = 1; j < pipe_num; j++)
                     {
                         close(fd[j][0]);
                         close(fd[j][1]);
                     }
                 }
+                else if (i == pipe_num) //执行最后一个命令
+                {
+                    //把写端关掉，读端打开
+                    dup2(fd[i - 1][0], 0);
+                    close(fd[i - 1][1]);
+                    //其他的管道全关掉
+                    for (int j = 0; j < pipe_num - 1; j++)
+                    {
+                        close(fd[j][0]);
+                        close(fd[j][1]);
+                    }
+                }
+                else
+                {
+                    //中间命令
+                    //把该命令管道前面的读端绑定，写端关闭
+                    dup2(fd[i - 1][0], 0);
+                    close(fd[i - 1][1]);
+                    //把该命令后面的管道的写端绑定，读端关闭
+                    dup2(fd[i][1], 1);
+                    close(fd[i][0]);
+                    //其他全关闭
+                    for (int j = 0; j < pipe_num; j++) //除了我们操作的这两个管道以外的管道的读写端都关掉
+                    {
+                        if (j != i && j != (i - 1))
+                        {
+                            close(fd[j][0]);
+                            close(fd[j][1]);
+                        }
+                    }
+                }
+            }
+
+            int ret = execvp(cmd[i][0], cmd[i]); //执行命令
+            if (ret == -1)
+            {
+                perror("execvp");
+                exit(-1);
             }
         }
-
-        int ret = execvp(cmd[i][0], cmd[i]); //执行命令
-        if (ret == -1)
+        if (in)
         {
-            perror("execvp");
-            exit(-1);
+            int fd = open(filename, O_RDONLY);
+            dup2(fd, 0);
         }
-    }
-    if (in)
-    {
-        int fd = open(filename, O_RDONLY);
-        dup2(fd, 0);
-    }
-    if (out)
-    {
-        int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0666);
-        dup2(fd, 1);
-    }
-    //父进程什么都不干，把管道的所有口都关掉
-    for (i = 0; i < pipe_num; i++)
-    {
-        close(fd[i][0]);
-        close(fd[i][1]); //父进程端口全部关掉
-    }
-    //每次子进程执行完之后都要让父进程等待
-
-    for (i = 0; i < cmd_num; i++)
-    {
-        if (!backflag)
-            wait(NULL);
-        else
+        if (out)
         {
-            exit(0);
+            int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0666);
+            dup2(fd, 1);
+        }
+        //父进程什么都不干，把管道的所有口都关掉
+        for (i = 0; i < pipe_num; i++)
+        {
+            close(fd[i][0]);
+            close(fd[i][1]); //父进程端口全部关掉
+        }
+        //每次子进程执行完之后都要让父进程等待
+
+        for (i = 0; i < cmd_num; i++)
+        {
+            if (!backflag)
+                wait(NULL);
+            else
+            {
+                exit(0);
+            }
         }
     }
 }
