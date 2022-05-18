@@ -246,19 +246,42 @@ void handler()
 }
 void hand()
 {
-    printf("put the 2");
+    printf("put the 2\n");
 }
 void my_signal()
 {
-    signal(SIGINT, SIG_IGN);//SIG_IGN 是忽略选项
-    signal(3,handler);
-    struct sigaction act;
-    memset(&act,0,sizeof(act));
-    act.sa_handler=hand;    
+    signal(1, SIG_IGN);  // SIG_IGN 是忽略选项,1号挂起信号
+    signal(4, SIG_DFL);  // 4号信号执行默认选项
+    signal(3, handler);  // 3号信号（quit）处理使用handler函数
+    sigset_t iset, oset; //对2号信号进行阻塞
+    sigemptyset(&iset);
+    sigemptyset(&oset);
+    sigaddset(&iset, 2);
+    sigprocmask(SIG_SETMASK, &iset, &oset); //对2号信号进行屏蔽
+    //过了100秒才会对它进行解除屏蔽
+    // printf("对2号信号进行屏蔽\n");
+    int cnt = 0;
+    if (sigismember(&iset, 2))
+    {
+        while (1)
+        {
+            cnt++;
+            sleep(1);
+            if (cnt == 10)
+            {
+                sigprocmask(SIG_SETMASK, &oset, NULL); //解除屏蔽
+                printf("解除了对2号信号的屏蔽\n");
+                break;
+            }
+        }
+    }
+    struct sigaction act; // sigaction使用与signal做区别
+    memset(&act, 0, sizeof(act));
+    act.sa_handler = hand;
     sigemptyset(&act.sa_mask);
-    sigaddset(&act.sa_mask,4);
-    sigaddset(&act.sa_mask, SIGFPE);    
-    sigaction(2,&act,NULL);
+    sigaddset(&act.sa_mask, 4);
+    sigaddset(&act.sa_mask, SIGFPE);
+    sigaction(2, &act, NULL); // 2号信号使用
 }
 
 void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
@@ -266,19 +289,19 @@ void DoCommandPipe(char *argv[], int size, int backflag) //处理管道
     //获得每个管道的位置
     int pipepos[5];
     int pipe_num = 0; //计算管道的数量
-    int in,out;
-    in=out=0;
-    char *filename="1.txt";
-    int rflag=0;
+    int in, out;
+    in = out = 0;
+    char *filename = "1.txt";
+    int rflag = 0;
     for (int t = 0; t < size; t++)
     {
-        
-        if (strcmp(argv[t], "|") == 0||strcmp(argv[t],">")==0)
+
+        if (strcmp(argv[t], "|") == 0 || strcmp(argv[t], ">") == 0)
         {
             pipepos[pipe_num++] = t;
         }
     }
-    int cmd_num = pipe_num + 1; 
+    int cmd_num = pipe_num + 1;
     //获得管道之间的命令
     char *cmd[cmd_num][7];
 
