@@ -36,7 +36,10 @@ public:
         //加锁，安全的
         bool ret=true;//这个不会被所有线程所共享
         // pthread_mutex_lock(&mutex);
+        
+        //一行代码是原子的，只有一行汇编的情况下才是原子的，否则都不是原子的
 
+        
         //这里的锁也是临界的资源
         mymtx.lock();//加锁使用c++版本的
 
@@ -63,7 +66,7 @@ private:
     std::mutex mymtx;//c++语言级别的,这里要加一个std::才可以不然的话没办法使用
     //mutex这里面一定封装了pthread_mutex,
     //我们现在学习的是语言底层使用的库，更靠近系统级别
-
+    int lock;//lock--就是申请锁，lock++ 就是释放锁，if(lock>0){lock--}
 
 };
 
