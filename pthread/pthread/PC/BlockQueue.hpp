@@ -5,15 +5,15 @@
 #include <queue>
 #include <pthread.h>
 #include<unistd.h>
-namespace ns_blockqueue
+namespace ns_blockqueue//使用一个自己的命名空间
 {
     const int default_cap = 5;
-    template <class T>
+    template <class T>//定义一个类模板
 
     class BlockQueue
     {
     private:
-        std::queue<int> _bq;    //队列
+        std::queue<T> _bq;    //队列,使用了一个类模板
         int _cap;               //队列的元素上限
         pthread_mutex_t _mutex; //保证数据安全
         //当生产满了的时候，就不要生产了，不要生产锁了，让消费者来消费
@@ -53,6 +53,8 @@ namespace ns_blockqueue
 
         void WaitConsume()
         {
+            //如果一直抱着锁被挂起的话，就会被永远挂起，死锁
+
             pthread_cond_wait(&_empty, &_mutex);
         }
         void WakeupConsumer()
@@ -87,13 +89,32 @@ namespace ns_blockqueue
         {
             //在访问临界资源的时候，就应该把数据锁住
             LockQueue();
+            //因为生产者消费者之间都是看同一个队列，所以这一把锁就已经够用了
+
+
+
             //临界区
-            if (IsFull())
+            // if (IsFull())
+            //我们需要进行条件检测的时候，这里需要使用循环的方式
+            //来保证退出循环一定是条件不满足导致的
+            while (IsFull())
             {
                 //等待，把线程挂起，我们当前是持有锁的，
                 //如果队列是空的话就不应该生产了，而是在那里等待
+
+                //1. 如果我挂起失败呢，因为函数调用有成功有失败
+                //函数调用失败
+
+
+                //2. 如果我被伪唤醒呢（条件还没有就绪）
+                //如果是多核多CPU的，很多线程都在条件变量下等待
+
+
+
                 WaitProduct();
+                //我醒来之后要再进行一次判断，判断是否为满，判断成功就往下走，
             }
+            //用if判断，有可能当前队列还是满的，再向下走的话，就会插入一个不应该插入的数据
 
             //生产函数
             _bq.push(in);
@@ -108,7 +129,8 @@ namespace ns_blockqueue
         void Pop(T *out) //向队列里面拿数据
         {
             LockQueue();
-            if(IsEmpty())
+            // if(IsEmpty())
+            while(IsEmpty())
             {
                 //无法消费
                 WaitConsume();
