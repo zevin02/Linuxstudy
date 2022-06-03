@@ -6,6 +6,7 @@
 using namespace ns_task;
 using namespace ns_threadpool;
 
+//线程池就是一个单例模式，只有一个线程池就够了
 
 int main()
 {
@@ -16,6 +17,11 @@ int main()
     srand((long long)time(nullptr));
     while(true)
     {
+        //以后就是从网络里面来
+        //主线程就是把任务放到线程池里面去
+        
+        //有的时候访问网站，挂掉了，OS受不了了，杀掉
+
         Task t(rand()%20+1,rand()%10+1,"+-*/%"[rand()%5]);
         tp->PushTask(t);//放进去让他进行处理工作
         

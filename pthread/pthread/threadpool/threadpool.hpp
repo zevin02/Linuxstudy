@@ -54,14 +54,13 @@ namespace ns_threadpool
                     //检测到任务队列为空
                     //此时线程就挂起等待
                     tp->Wait();
-
                 }
                 //该任务队列里面一定有任务了
                 T t;
                 tp->PopTask(&t);
                 //任务就拿到了
                 tp->UnLock();
-                t.Run();//可能有多个线程在处理任务
+                t.Run();//可能有多个线程在处理任务,
 
                 sleep(1);
             }
